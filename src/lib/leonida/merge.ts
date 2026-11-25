@@ -36,7 +36,8 @@ export function mergePlaces<T extends Spot>(locations: T[], places: T[]) {
       byKind.get(p.kind)?.filter((l) => dist(l) < NEAR && [...words(l.name, l.type)].some((w) => placeWords.has(w))).sort((a, b) => dist(a) - dist(b))[0];
     if (!twin) { kept.push(p); continue; }
     const l = out.get(twin.id)!;
-    l.area = p.area || l.area;
+    const area = p.area || l.area;
+    if (area) l.area = area;
     if (!l.real_life && p.real_life) l.real_life = p.real_life;
     if (!l.service && p.service) l.service = p.service;
     merged.set(p.id, twin.id);
