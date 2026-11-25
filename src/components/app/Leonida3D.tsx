@@ -80,9 +80,9 @@ export default function Leonida3D({ data, districts }: { data: Processed; distri
         <directionalLight position={[200, 400, 150]} intensity={1.2} />
         <mesh geometry={OCEAN} material={M.ocean} position-y={-0.05} />
         <mesh geometry={g.land} material={M.land} />
-        {g.surf.map((s) => <mesh key={s.k} geometry={s.geo} material={M.surf[s.k]} renderOrder={1 + s.i} />)}
-        <group ref={nearRef}>{g.near.map((r) => <mesh key={r.k} geometry={r.geo} material={M.road[r.k]} renderOrder={10 + ROAD_ORDER.indexOf(r.k)} />)}</group>
-        <group ref={farRef} visible={false}>{g.far.map((r) => <mesh key={r.k} geometry={r.geo} material={M.road[r.k]} renderOrder={10 + ROAD_ORDER.indexOf(r.k)} />)}</group>
+        {g.surf.map((s) => <mesh key={s.k} geometry={s.geo} material={M.surf[s.k]!} renderOrder={1 + s.i} />)}
+        <group ref={nearRef}>{g.near.map((r) => <mesh key={r.k} geometry={r.geo} material={M.road[r.k]!} renderOrder={10 + ROAD_ORDER.indexOf(r.k)} />)}</group>
+        <group ref={farRef} visible={false}>{g.far.map((r) => <mesh key={r.k} geometry={r.geo} material={M.road[r.k]!} renderOrder={10 + ROAD_ORDER.indexOf(r.k)} />)}</group>
         <lineSegments geometry={g.rails} material={M.rail} renderOrder={20} />
         <lineSegments geometry={dist} material={M.dist} renderOrder={21} />
         <LodSwitch near={nearRef} far={farRef} />
