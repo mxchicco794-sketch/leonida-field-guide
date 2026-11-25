@@ -81,10 +81,11 @@ describe("worker preprocessing pipeline", () => {
     expect(p.land.position).toBeInstanceOf(Float32Array);
     expect(p.land.index.length).toBeGreaterThan(0);
     expect(Object.keys(p.roads).sort()).toEqual(["highway", "street"]);
-    expect(Object.keys(p.surface)).toEqual(["building"]);
+    expect(Object.keys(p.surface)).toEqual([]);
+    expect(p.buildings.stats.rendered).toBe(1);
     expect(p.rails.length).toBe(6);
     expect(p.land.position[1]).toBeCloseTo(LAND_H);
-    expect(transferables(p).length).toBe(2 + 2 + 4 + 2 + 1);
+    expect(transferables(p).length).toBe(2 + 4 + 2 + 3 + 3 + 1);
   });
   it("skips invalid shapes and counts them", () => {
     const r = raw();

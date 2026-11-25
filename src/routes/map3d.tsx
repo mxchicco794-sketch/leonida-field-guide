@@ -40,7 +40,7 @@ function Map3DPage() {
         : !geo.data ? <Loading stage={stage} />
         : <Suspense fallback={msg("Preparing 3D view…")}><Leonida3D data={geo.data.data} districts={data?.districts ?? []} /></Suspense>}
       <p className="glass absolute bottom-[76px] left-3 right-3 rounded-xl border border-border px-3 py-1.5 text-[10px] text-muted-foreground">
-        Drag to pan, pinch/scroll to zoom, two fingers to tilt. Data: <a className="underline" href={SOURCE_REPO} target="_blank" rel="noreferrer">Open GTA 6 Map</a> · CC BY 4.0
+        Building heights are stylized estimates, not official GTA VI data. Drag to pan, pinch to zoom, two fingers to tilt. Data: <a className="underline" href={SOURCE_REPO} target="_blank" rel="noreferrer">Open GTA 6 Map</a> · CC BY 4.0
       </p>
     </div>
   );

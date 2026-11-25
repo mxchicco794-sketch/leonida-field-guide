@@ -4,9 +4,10 @@
  * No React / DOM. Output is typed arrays ready for THREE.BufferGeometry.
  */
 import { ShapeUtils, Vector2 } from "three";
+import { buildBuildings, type BMesh, type BuildingSet } from "./buildings";
 
 /** Bump when the processing output changes; invalidates the IndexedDB cache. */
-export const PROCESSOR_VERSION = 2;
+export const PROCESSOR_VERSION = 3;
 
 /** World transform: map units (x right, y down) → world X = x − CX, Z = y − CY, Y up. */
 export const CX = 496, CY = 480;
@@ -72,6 +73,7 @@ export function simplify(line: Pt[], tol: number, lock: Set<string>): Pt[] {
 export interface Mesh { position: Float32Array; index: Uint32Array }
 export interface Stats { rejectedPoints: number; rejectedRings: number; rejectedLines: number; polygons: number; lines: number }
 export interface Processed {
+  buildings: BuildingSet; // STYLIZED heights, see buildings.ts
   version: number;
   land: Mesh;
   surface: Record<string, Mesh>;
@@ -203,11 +205,13 @@ export function processGeometry(raw: RawGeometry): Processed {
   const surfB: Record<string, Builder> = {};
   const sf = (raw.surface as { features?: unknown[] })?.features;
   if (!Array.isArray(sf)) throw new Error("Invalid surface.json");
+  const footprints: unknown[] = [];
   for (const f of sf) {
     const g = (f as { geometry?: { type?: string; coordinates?: unknown } }).geometry;
     const layer = String((f as { properties?: Record<string, unknown> }).properties?.["layer"] ?? "other");
-    const b = (surfB[layer] ??= new Builder());
     const polys = g?.type === "Polygon" ? [g.coordinates] : g?.type === "MultiPolygon" && Array.isArray(g.coordinates) ? g.coordinates : [];
+    if (layer === "building") { for (const p of polys) footprints.push(Array.isArray(p) ? p[0] : null); continue; }
+    const b = (surfB[layer] ??= new Builder());
     for (const p of polys) addPolygon(b, p, LAND_H + 0.01, s);
   }
 
@@ -237,7 +241,9 @@ export function processGeometry(raw: RawGeometry): Processed {
     for (let i = 1; i < c.length; i++) rail.push(...toWorld(c[i - 1]![0], c[i - 1]![1], LAND_H + 0.1), ...toWorld(c[i]![0], c[i]![1], LAND_H + 0.1));
   }
 
+  const buildings = buildBuildings(footprints, s);
   const out: Processed = {
+    buildings,
     version: PROCESSOR_VERSION,
     land: land.done(),
     surface: Object.fromEntries(Object.entries(surfB).map(([k, b]) => [k, b.done()])),
@@ -255,7 +261,7 @@ export function processGeometry(raw: RawGeometry): Processed {
 /** Shape-integrity check run before rendering (also on cached data). */
 export function assertProcessed(p: Processed) {
   if (!p || p.version !== PROCESSOR_VERSION) throw new Error("Processed geometry version mismatch");
-  const meshes = [p.land, ...Object.values(p.surface), ...Object.values(p.roads), ...Object.values(p.roadsFar)];
+  const meshes: Mesh[] = [...(p.buildings?.chunks ?? []), ...(p.buildings ? [p.buildings.far] : []), p.land, ...Object.values(p.surface), ...Object.values(p.roads), ...Object.values(p.roadsFar)];
   for (const m of meshes) {
     if (!(m.position instanceof Float32Array) || !(m.index instanceof Uint32Array)) throw new Error("Bad buffer types");
     if (m.position.length % 3 || m.index.length % 3) throw new Error("Buffer length not a multiple of 3");
@@ -263,13 +269,17 @@ export function assertProcessed(p: Processed) {
     for (let i = 0; i < m.index.length; i++) if (m.index[i]! >= nv) throw new Error("Index out of range");
     for (let i = 0; i < m.position.length; i++) if (!Number.isFinite(m.position[i]!)) throw new Error("Non-finite vertex");
   }
+  for (const b of [...(p.buildings?.chunks ?? []), p.buildings?.far]) {
+    if (!b || !(b.color instanceof Float32Array) || b.color.length !== b.position.length) throw new Error("Bad building buffers");
+  }
   if (p.rails.length % 6) throw new Error("Rail segments malformed");
 }
 
 /** Collect the ArrayBuffers to transfer from a worker (zero-copy). */
 export function transferables(p: Processed): ArrayBuffer[] {
   const ms = [p.land, ...Object.values(p.surface), ...Object.values(p.roads), ...Object.values(p.roadsFar)];
-  return [...ms.flatMap((m) => [m.position.buffer as ArrayBuffer, m.index.buffer as ArrayBuffer]), p.rails.buffer as ArrayBuffer];
+  const bs: BMesh[] = [...p.buildings.chunks, p.buildings.far];
+  return [...ms.flatMap((m) => [m.position.buffer as ArrayBuffer, m.index.buffer as ArrayBuffer]), ...bs.flatMap((m) => [m.position.buffer as ArrayBuffer, m.color.buffer as ArrayBuffer, m.index.buffer as ArrayBuffer]), p.rails.buffer as ArrayBuffer];
 }
 
 export { Builder };
