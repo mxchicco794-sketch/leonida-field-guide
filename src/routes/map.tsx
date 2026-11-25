@@ -1,4 +1,4 @@
-import { ClientOnly, createFileRoute } from "@tanstack/react-router";
+import { ClientOnly, createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { EyeOff, Layers, Moon, Search, Sun, X } from "lucide-react";
 import { lazy, Suspense, useMemo, useState } from "react";
@@ -64,6 +64,7 @@ function MapPage() {
         <button onClick={() => setVector(!vector)} aria-label="Toggle vector overlay" aria-pressed={vector} className={cn("shrink-0 rounded-full border p-2.5", vector ? "border-primary text-primary glass" : "glass border-border")}>
           <Layers className={cn("size-4", vector && geo.isFetching && "animate-pulse")} />
         </button>
+        <Link to="/map3d" aria-label="Open stylized 3D map" className="glass shrink-0 rounded-full border border-border px-3 py-2 text-xs font-semibold">3D</Link>
         {GROUPS.map((g) => {
           const on = groups.includes(g);
           return (

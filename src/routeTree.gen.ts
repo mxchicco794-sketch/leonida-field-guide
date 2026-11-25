@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CollectiblesRouteImport } from './routes/collectibles'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as MapRouteImport } from './routes/map'
+import { Route as Map3dRouteImport } from './routes/map3d'
 import { Route as ProfileRouteImport } from './routes/profile'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +36,11 @@ const MapRoute = MapRouteImport.update({
   path: '/map',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Map3dRoute = Map3dRouteImport.update({
+  id: '/map3d',
+  path: '/map3d',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/collectibles': typeof CollectiblesRoute
   '/favorites': typeof FavoritesRoute
   '/map': typeof MapRoute
+  '/map3d': typeof Map3dRoute
   '/profile': typeof ProfileRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/collectibles': typeof CollectiblesRoute
   '/favorites': typeof FavoritesRoute
   '/map': typeof MapRoute
+  '/map3d': typeof Map3dRoute
   '/profile': typeof ProfileRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,23 @@ export interface FileRoutesById {
   '/collectibles': typeof CollectiblesRoute
   '/favorites': typeof FavoritesRoute
   '/map': typeof MapRoute
+  '/map3d': typeof Map3dRoute
   '/profile': typeof ProfileRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/collectibles' | '/favorites' | '/map' | '/profile'
+  fullPaths:
+    '/' | '/collectibles' | '/favorites' | '/map' | '/map3d' | '/profile'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/collectibles' | '/favorites' | '/map' | '/profile'
-  id: '__root__' | '/' | '/collectibles' | '/favorites' | '/map' | '/profile'
+  to: '/' | '/collectibles' | '/favorites' | '/map' | '/map3d' | '/profile'
+  id:
+    | '__root__'
+    | '/'
+    | '/collectibles'
+    | '/favorites'
+    | '/map'
+    | '/map3d'
+    | '/profile'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +93,7 @@ export interface RootRouteChildren {
   CollectiblesRoute: typeof CollectiblesRoute
   FavoritesRoute: typeof FavoritesRoute
   MapRoute: typeof MapRoute
+  Map3dRoute: typeof Map3dRoute
   ProfileRoute: typeof ProfileRoute
 }
 
@@ -109,6 +127,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MapRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/map3d': {
+      id: '/map3d'
+      path: '/map3d'
+      fullPath: '/map3d'
+      preLoaderRoute: typeof Map3dRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -124,6 +149,7 @@ const rootRouteChildren: RootRouteChildren = {
   CollectiblesRoute: CollectiblesRoute,
   FavoritesRoute: FavoritesRoute,
   MapRoute: MapRoute,
+  Map3dRoute: Map3dRoute,
   ProfileRoute: ProfileRoute,
 }
 export const routeTree = rootRouteImport
