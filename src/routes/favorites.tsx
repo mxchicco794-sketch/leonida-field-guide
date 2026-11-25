@@ -1,0 +1,48 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Heart } from "lucide-react";
+import { Attribution, PageHeader, StateMessage } from "@/components/app/AppShell";
+import { progressActions, useProgress } from "@/lib/leonida/progress";
+import { useDataset } from "@/lib/leonida/queries";
+
+export const Route = createFileRoute("/favorites")({
+  head: () => ({
+    meta: [
+      { title: "Favorites — Leonida Companion" },
+      { name: "description", content: "Your saved Leonida locations, stored on this device." },
+      { property: "og:title", content: "Favorites — Leonida Companion" },
+      { property: "og:description", content: "Your saved Leonida locations." },
+    ],
+  }),
+  component: Favorites,
+});
+
+function Favorites() {
+  const { data, kindMap } = useDataset();
+  const { favorites } = useProgress();
+  const items = (data?.locations ?? []).filter((l) => favorites.includes(l.id));
+  return (
+    <div>
+      <PageHeader eyebrow="Saved" title="Favorites" />
+      {items.length === 0 ? (
+        <StateMessage title="No favorites yet" body="Tap a pin on the map and choose Favorite to save it here." />
+      ) : (
+        <ul className="space-y-2 px-5">
+          {items.map((l) => {
+            const k = kindMap.get(l.kind);
+            return (
+              <li key={l.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 animate-rise">
+                <span className="text-xl">{k?.icon}</span>
+                <Link to="/map" search={{ id: l.id }} className="flex-1 min-w-0">
+                  <p className="truncate font-semibold">{l.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{[k?.name, l.area].filter(Boolean).join(" · ")}</p>
+                </Link>
+                <button aria-label="Remove favorite" onClick={() => progressActions.toggleFavorite(l.id)} className="text-primary"><Heart className="size-5 fill-current" /></button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <Attribution />
+    </div>
+  );
+}
