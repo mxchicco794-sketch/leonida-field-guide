@@ -1,8 +1,9 @@
 import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Layers, Moon, Sun } from "lucide-react";
+import { EyeOff, Layers, Moon, Search, Sun, X } from "lucide-react";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { LocationSheet } from "@/components/app/LocationSheet";
+import { fold, inRings } from "@/lib/leonida/cluster";
 import { useProgress } from "@/lib/leonida/progress";
 import { geometryQuery, useDataset } from "@/lib/leonida/queries";
 import type { Group, LeonidaLocation } from "@/lib/leonida/types";
@@ -35,11 +36,24 @@ function MapPage() {
   const [vector, setVector] = useState(false);
   const geo = useQuery({ ...geometryQuery, enabled: vector });
   const [selected, setSelected] = useState<LeonidaLocation | null>(null);
+  const [district, setDistrict] = useState("");
+  const [hideFound, setHideFound] = useState(false);
+  const [q, setQ] = useState("");
+  const [focus, setFocus] = useState<string | undefined>(undefined);
+  const focusId = focus ?? id;
 
-  const visible = useMemo(
-    () => (data?.locations ?? []).filter((l) => l.id === id || groups.includes(kindMap.get(l.kind)?.group ?? "Other")),
-    [data, groups, kindMap, id],
-  );
+  const visible = useMemo(() => {
+    const d = data?.districts.find((x) => x.name === district);
+    const f = hideFound ? new Set(found) : null;
+    return (data?.locations ?? []).filter((l) => l.id === focusId || (
+      groups.includes(kindMap.get(l.kind)?.group ?? "Other") && (!d || inRings(l.x, l.y, d.rings)) && !f?.has(l.id)));
+  }, [data, groups, kindMap, focusId, district, hideFound, found]);
+
+  const results = useMemo(() => {
+    const t = fold(q.trim());
+    if (t.length < 2 || !data) return [];
+    return data.locations.filter((l) => fold([l.name, l.type, l.area, l.region, l.real_life, l.description, kindMap.get(l.kind)?.name].filter(Boolean).join(" ")).includes(t)).slice(0, 30);
+  }, [q, data, kindMap]);
 
   return (
     <div className="fixed inset-0 mx-auto max-w-md pb-[68px]">
@@ -60,12 +74,39 @@ function MapPage() {
           );
         })}
       </div>
+      <div className="absolute inset-x-0 top-14 z-[999] px-3">
+        <div className="glass flex items-center gap-2 rounded-full border border-border px-3">
+          <Search className="size-4 text-muted-foreground" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search places, collectibles, areas…" aria-label="Search the map" className="h-10 flex-1 bg-transparent text-sm outline-none" />
+          {q && <button aria-label="Clear search" onClick={() => setQ("")}><X className="size-4" /></button>}
+        </div>
+        {results.length > 0 && (
+          <ul className="glass mt-2 max-h-72 overflow-y-auto rounded-2xl border border-border">
+            {results.map((l) => (
+              <li key={l.id}><button onClick={() => { setFocus(l.id); setQ(""); }} className="w-full px-4 py-2.5 text-left">
+                <p className="truncate text-sm font-semibold">{kindMap.get(l.kind)?.icon} {l.name}</p>
+                <p className="truncate text-xs text-muted-foreground">{[kindMap.get(l.kind)?.name, l.area].filter(Boolean).join(" · ")}</p>
+              </button></li>
+            ))}
+          </ul>
+        )}
+        {q.trim().length >= 2 && results.length === 0 && <p className="glass mt-2 rounded-2xl border border-border px-4 py-3 text-xs text-muted-foreground">No matches in the map data.</p>}
+        <div className="mt-2 flex gap-2">
+          <select value={district} onChange={(e) => setDistrict(e.target.value)} aria-label="Filter by district" className="glass h-9 flex-1 rounded-full border border-border bg-transparent px-3 text-xs">
+            <option value="">All districts</option>
+            {(data?.districts ?? []).map((d, i) => <option key={`${d.name}-${i}`} value={d.name}>{d.name}</option>)}
+          </select>
+          <button onClick={() => setHideFound(!hideFound)} aria-pressed={hideFound} className={cn("glass flex h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold", hideFound ? "border-primary text-primary" : "border-border text-muted-foreground")}>
+            <EyeOff className="size-3.5" /> Hide found
+          </button>
+        </div>
+      </div>
       {isError && !data ? (
         <div className="grid h-full place-items-center p-8 text-center text-sm text-muted-foreground">Could not load map data. Connect to the internet once to sync it.</div>
       ) : (
         <ClientOnly fallback={<Loading />}>
           <Suspense fallback={<Loading />}>
-            <LeonidaMap locations={visible} districts={data?.districts ?? []} routes={data?.routes ?? []} geometry={vector ? geo.data : undefined} kindMap={kindMap} found={found} style={style} focusId={id} onSelect={setSelected} />
+            <LeonidaMap locations={visible} districts={data?.districts ?? []} routes={data?.routes ?? []} geometry={vector ? geo.data : undefined} kindMap={kindMap} found={found} style={style} focusId={focusId} onSelect={setSelected} />
           </Suspense>
         </ClientOnly>
       )}

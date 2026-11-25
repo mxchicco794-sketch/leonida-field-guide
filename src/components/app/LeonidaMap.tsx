@@ -1,6 +1,7 @@
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useEffect, useRef } from "react";
+import { clusterPoints } from "@/lib/leonida/cluster";
 import { MAP_BOUNDS, SOURCE_REPO, TILE_URL } from "@/lib/leonida/api";
 import type { District, Geometry, GeoFeature, Kind, LeonidaLocation, RouteShield } from "@/lib/leonida/types";
 
@@ -51,7 +52,12 @@ export default function LeonidaMap({ locations, districts, routes, geometry, kin
   useEffect(() => {
     if (!el.current) return;
     // Same settings as the source map (src/map.ts): CRS.Simple, zoom -1..7, bounds padded 30%.
-    const m = L.map(el.current, { crs: L.CRS.Simple, minZoom: -1, maxZoom: 7, zoomSnap: 0.5, zoomControl: false, preferCanvas: true, maxBounds: BOUNDS.pad(0.3) });
+    const m = L.map(el.current, {
+      crs: L.CRS.Simple, minZoom: -1, maxZoom: 7, zoomSnap: 0.5, zoomControl: false, preferCanvas: true, maxBounds: BOUNDS.pad(0.3),
+      // Touch feel: inertia + soft bounds, animated zoom, single shared canvas renderer.
+      inertia: true, inertiaDeceleration: 2600, inertiaMaxSpeed: 2200, easeLinearity: 0.2, maxBoundsViscosity: 0.6,
+      zoomAnimation: true, markerZoomAnimation: true, fadeAnimation: true, wheelPxPerZoomLevel: 90, renderer: L.canvas({ padding: 0.5, tolerance: 6 }),
+    });
     m.attributionControl.setPrefix(false);
     m.fitBounds(BOUNDS);
     L.control.zoom({ position: "bottomright" }).addTo(m);
@@ -65,7 +71,7 @@ export default function LeonidaMap({ locations, districts, routes, geometry, kin
     const m = map.current;
     if (!m) return;
     tiles.current?.remove();
-    tiles.current = L.tileLayer(TILE_URL(style), { tileSize: 256, minZoom: -1, minNativeZoom: 0, maxNativeZoom: 5, maxZoom: 7, noWrap: true, bounds: BOUNDS, attribution: ATTRIBUTION }).addTo(m);
+    tiles.current = L.tileLayer(TILE_URL(style), { tileSize: 256, minZoom: -1, minNativeZoom: 0, maxNativeZoom: 5, maxZoom: 7, noWrap: true, bounds: BOUNDS, attribution: ATTRIBUTION, keepBuffer: 3, updateWhenZooming: false, updateWhenIdle: false, crossOrigin: true }).addTo(m);
     tiles.current.bringToBack();
   }, [style]);
 
@@ -97,23 +103,42 @@ export default function LeonidaMap({ locations, districts, routes, geometry, kin
     for (const f of geometry.rails.features) featureLayer(f, { color: "#c0c0c0", weight: 1, dashArray: "3 3", interactive: false })?.addTo(g);
   }, [geometry]);
 
+  // Pins: redrawn only on zoomend / data change (never per pan frame). Singles are canvas circles; clusters are few DOM labels.
   useEffect(() => {
     const g = pins.current;
     const m = map.current;
     if (!g || !m) return;
-    g.clearLayers();
     const foundSet = new Set(found);
-    for (const loc of locations) {
-      const colour = kindMap.get(loc.kind)?.colour ?? "#e5383b";
-      const isFound = foundSet.has(loc.id);
-      L.circleMarker(ll([loc.x, loc.y]), { radius: 6, weight: 2, color: "#0b0b0c", fillColor: colour, fillOpacity: isFound ? 0.25 : 0.95, opacity: isFound ? 0.4 : 1 })
-        .on("click", () => onSelectRef.current(loc)).addTo(g);
-    }
+    let lastZoom = NaN;
+    const draw = () => {
+      const z = m.getZoom();
+      if (z === lastZoom) return;
+      lastZoom = z;
+      g.clearLayers();
+      for (const c of clusterPoints(locations, z)) {
+        if (c.type === "single") {
+          const loc = c.item;
+          const colour = kindMap.get(loc.kind)?.colour ?? "#e5383b";
+          const isFound = foundSet.has(loc.id);
+          L.circleMarker(ll([loc.x, loc.y]), { radius: 6, weight: 2, color: "#0b0b0c", fillColor: colour, fillOpacity: isFound ? 0.25 : 0.95, opacity: isFound ? 0.4 : 1 })
+            .on("click", () => onSelectRef.current(loc)).addTo(g);
+        } else {
+          const n = c.items.length;
+          const size = n < 10 ? 30 : n < 100 ? 36 : 44;
+          L.marker(ll([c.x, c.y]), { icon: L.divIcon({ className: "leo-cluster", html: `<span>${n}</span>`, iconSize: [size, size] }) })
+            .on("click", () => m.flyToBounds(L.latLngBounds([ll([c.minX, c.minY]), ll([c.maxX, c.maxY])]).pad(0.3), { maxZoom: Math.min(z + 2.5, 6), duration: 0.45 }))
+            .addTo(g);
+        }
+      }
+    };
+    draw();
+    m.on("zoomend", draw);
     // Like the source map, first fit to where the pins are, not the whole (mostly sea) tile square.
     if (!fitted.current && locations.length && !focusId) {
       fitted.current = true;
       m.fitBounds(L.latLngBounds(locations.map((l) => ll([l.x, l.y]))).pad(0.04));
     }
+    return () => { m.off("zoomend", draw); };
   }, [locations, kindMap, found, focusId]);
 
   useEffect(() => {
