@@ -147,3 +147,7 @@
 .leaflet-container { background: var(--background) !important; font-family: var(--font-sans); }
 .leaflet-control-attribution { background: color-mix(in oklab, var(--background) 80%, transparent) !important; color: var(--muted-foreground) !important; font-size: 10px; }
 .leaflet-control-attribution a { color: var(--foreground) !important; }
+.leo-label span { display: block; transform: translate(-50%, -50%); white-space: nowrap; font-family: var(--font-display); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--foreground); text-shadow: 0 1px 3px var(--background), 0 0 6px var(--background); }
+.leo-shield { transform: translate(-50%, -50%); width: max-content !important; height: auto !important; padding: 1px 5px; border-radius: 4px; font-size: 9px; font-weight: 700; background: var(--secondary); color: var(--foreground); border: 1px solid var(--border); }
+.leo-shield-interstate { background: var(--primary); color: var(--primary-foreground); }
+.leaflet-bar a { background: var(--card) !important; color: var(--foreground) !important; border-color: var(--border) !important; }

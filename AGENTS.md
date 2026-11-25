@@ -29,5 +29,5 @@ use the editor.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
 
-- Leonida data comes only from the Open GTA 6 Map (fbritoferreira.github.io/gta6, CC BY 4.0) via `src/lib/leonida/api.ts`; never invent locations or coordinates, and keep the attribution visible — the app is a fan companion built on that source.
+- Leonida data comes only from the Open GTA 6 Map (fbritoferreira.github.io/gta6, CC BY 4.0) via `src/lib/leonida/api.ts` (map settings mirror the source `src/map.ts`; heavy geometry files load only for the optional overlay); never invent locations or coordinates, and keep the attribution visible — the app is a fan companion built on that source.
 - User progress (found/favorites) lives in the local store `src/lib/leonida/progress.ts`; keep all reads/writes there so a future cloud sync can replace it in one place.

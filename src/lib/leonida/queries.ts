@@ -1,7 +1,7 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 import { useHydrated } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { loadDataset } from "./api";
+import { loadDataset, loadGeometry } from "./api";
 import type { Kind } from "./types";
 
 export const datasetQuery = queryOptions({
@@ -23,3 +23,5 @@ export function useDataset() {
   }, [q.data]);
   return { ...q, kindMap };
 }
+
+export const geometryQuery = queryOptions({ queryKey: ["leonida", "geometry"], queryFn: loadGeometry, staleTime: Infinity });

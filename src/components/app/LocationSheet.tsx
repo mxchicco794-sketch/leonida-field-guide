@@ -14,6 +14,7 @@ export function LocationSheet({ loc, kind, onClose }: { loc: LeonidaLocation; ki
       <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: kind?.colour }}>{kind?.icon} {kind?.name ?? loc.kind}</p>
       <h2 className="mt-1 pr-8 font-display text-xl font-bold">{loc.name}</h2>
       <p className="text-sm text-muted-foreground">{[loc.type, loc.area].filter(Boolean).join(" · ")}</p>
+      {loc.real_life && <p className="mt-2 text-xs text-muted-foreground">Real-life: {loc.real_life}</p>}
       {loc.screenshot && <img src={assetUrl(loc.screenshot)} alt={loc.name} loading="lazy" className="mt-3 aspect-video w-full rounded-xl object-cover" />}
       {loc.description && <p className="mt-3 max-h-24 overflow-y-auto text-sm leading-relaxed">{loc.description}</p>}
       <div className="mt-4 grid grid-cols-2 gap-2">

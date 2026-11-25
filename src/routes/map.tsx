@@ -1,9 +1,10 @@
 import { ClientOnly, createFileRoute } from "@tanstack/react-router";
-import { Moon, Sun } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Layers, Moon, Sun } from "lucide-react";
 import { lazy, Suspense, useMemo, useState } from "react";
 import { LocationSheet } from "@/components/app/LocationSheet";
 import { useProgress } from "@/lib/leonida/progress";
-import { useDataset } from "@/lib/leonida/queries";
+import { geometryQuery, useDataset } from "@/lib/leonida/queries";
 import type { Group, LeonidaLocation } from "@/lib/leonida/types";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,8 @@ function MapPage() {
   const { found } = useProgress();
   const [groups, setGroups] = useState<Group[]>(["Collectibles", "Activities"]);
   const [style, setStyle] = useState<"night" | "day">("night");
+  const [vector, setVector] = useState(false);
+  const geo = useQuery({ ...geometryQuery, enabled: vector });
   const [selected, setSelected] = useState<LeonidaLocation | null>(null);
 
   const visible = useMemo(
@@ -43,6 +46,9 @@ function MapPage() {
       <div className="absolute inset-x-0 top-0 z-[999] flex gap-2 overflow-x-auto p-3 [scrollbar-width:none]">
         <button onClick={() => setStyle(style === "night" ? "day" : "night")} aria-label="Toggle base map" className="glass shrink-0 rounded-full border border-border p-2.5">
           {style === "night" ? <Moon className="size-4" /> : <Sun className="size-4" />}
+        </button>
+        <button onClick={() => setVector(!vector)} aria-label="Toggle vector overlay" aria-pressed={vector} className={cn("shrink-0 rounded-full border p-2.5", vector ? "border-primary text-primary glass" : "glass border-border")}>
+          <Layers className={cn("size-4", vector && geo.isFetching && "animate-pulse")} />
         </button>
         {GROUPS.map((g) => {
           const on = groups.includes(g);
@@ -59,7 +65,7 @@ function MapPage() {
       ) : (
         <ClientOnly fallback={<Loading />}>
           <Suspense fallback={<Loading />}>
-            <LeonidaMap locations={visible} kindMap={kindMap} found={found} style={style} focusId={id} onSelect={setSelected} />
+            <LeonidaMap locations={visible} districts={data?.districts ?? []} routes={data?.routes ?? []} geometry={vector ? geo.data : undefined} kindMap={kindMap} found={found} style={style} focusId={id} onSelect={setSelected} />
           </Suspense>
         </ClientOnly>
       )}
