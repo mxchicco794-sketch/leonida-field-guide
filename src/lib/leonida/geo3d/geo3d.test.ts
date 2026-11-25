@@ -49,7 +49,7 @@ describe("validation", () => {
 
 describe("road strips", () => {
   it("documented widths by kind", () => {
-    expect(ROAD_WIDTH).toEqual({ highway: 1.6, main: 1.2, minor: 0.8, street: 0.6 });
+    expect(ROAD_WIDTH).toEqual({ highway: 1.0, main: 0.75, minor: 0.5, street: 0.4 });
   });
   it("straight strip has the kind's full width and faces up", () => {
     const b = new Builder();
@@ -57,7 +57,7 @@ describe("road strips", () => {
     const m = b.done();
     expect(m.position.length).toBe(4 * 3);
     expect(m.index.length).toBe(6);
-    expect(Math.abs(m.position[2]! - m.position[5]!)).toBeCloseTo(1.6);
+    expect(Math.abs(m.position[2]! - m.position[5]!)).toBeCloseTo(1.0);
     for (let t = 0; t < m.index.length; t += 3) {
       const [a, c, d] = [m.index[t]!, m.index[t + 1]!, m.index[t + 2]!].map((i) => [m.position[i * 3]!, m.position[i * 3 + 2]!]);
       const ny = (d![0]! - a![0]!) * (c![1]! - a![1]!) - (c![0]! - a![0]!) * (d![1]! - a![1]!);

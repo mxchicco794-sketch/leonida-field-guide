@@ -7,7 +7,7 @@ import { ShapeUtils, Vector2 } from "three";
 import { buildBuildings, type BMesh, type BuildingSet } from "./buildings";
 
 /** Bump when the processing output changes; invalidates the IndexedDB cache. */
-export const PROCESSOR_VERSION = 3;
+export const PROCESSOR_VERSION = 4;
 
 /** World transform: map units (x right, y down) → world X = x − CX, Z = y − CY, Y up. */
 export const CX = 496, CY = 480;
@@ -19,8 +19,8 @@ export const EXTENT = { minX: 160, maxX: 832, minY: 160, maxY: 800 } as const;
  * Stylized road strip full widths in map units, by roads.json `kind`.
  * Not real-world lane widths (the source has none); chosen for legibility.
  */
-export const ROAD_WIDTH: Record<string, number> = { highway: 1.6, main: 1.2, minor: 0.8, street: 0.6 };
-export const DEFAULT_ROAD_WIDTH = 0.6;
+export const ROAD_WIDTH: Record<string, number> = { highway: 1.0, main: 0.75, minor: 0.5, street: 0.4 };
+export const DEFAULT_ROAD_WIDTH = 0.4;
 /** Small per-kind lift above land so strips never z-fight each other. */
 export const ROAD_LIFT: Record<string, number> = { highway: 0.08, main: 0.06, minor: 0.04, street: 0.03 };
 
@@ -228,8 +228,8 @@ export function processGeometry(raw: RawGeometry): Processed {
     for (const l of ls) addStrip(nb, simplify(l, LOD.near, lock), w, h);
     if (FAR_KINDS.includes(kind)) {
       const fb = (farB[kind] = new Builder());
-      // far view: strips widened 1.5× so arterials stay legible from altitude
-      for (const l of ls) addStrip(fb, simplify(l, LOD.far, lock), w * 1.5, h);
+      // far view: strips widened 1.25× so arterials stay legible from altitude
+      for (const l of ls) addStrip(fb, simplify(l, LOD.far, lock), w * 1.25, h);
     }
   }
 

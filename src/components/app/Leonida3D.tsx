@@ -10,15 +10,15 @@ import type { BMesh } from "@/lib/leonida/geo3d/buildings";
 const CHUNK_RADIUS = 190;
 
 /** Palette (dark identity). Module-level so materials are created once and reused across mounts. */
-const ROAD_COLOR: Record<string, string> = { highway: "#e9c77f", main: "#cfae72", minor: "#7d7466", street: "#5b5650" };
-const SURF_COLOR: Record<string, string> = { shallow: "#1b4d58", sand: "#6e6248", park: "#2c4a31", urban: "#34312e", paved: "#3c3a37" };
+const ROAD_COLOR: Record<string, string> = { highway: "#5c5f63", main: "#686b6f", minor: "#45474a", street: "#3d3f42" };
+const SURF_COLOR: Record<string, string> = { shallow: "#0f3340", sand: "#8a7b5c", park: "#2f4a2c", urban: "#2c2b29", paved: "#353433" };
 /** Draw order bottom→top; "building" footprints are intentionally not drawn in this phase. */
 const SURF_ORDER = ["shallow", "sand", "park", "urban", "paved"];
 const ROAD_ORDER = ["street", "minor", "main", "highway"];
 const mat = (c: string, i: number) => new THREE.MeshBasicMaterial({ color: c, polygonOffset: true, polygonOffsetFactor: -1 - i, polygonOffsetUnits: -1 - i, depthWrite: false });
 const M = {
-  ocean: new THREE.MeshBasicMaterial({ color: "#0b2430" }),
-  land: new THREE.MeshLambertMaterial({ color: "#26231f", side: THREE.DoubleSide }),
+  ocean: new THREE.MeshBasicMaterial({ color: "#071a26" }),
+  land: new THREE.MeshLambertMaterial({ color: "#33302a", side: THREE.DoubleSide }),
   surf: Object.fromEntries(SURF_ORDER.map((k, i) => [k, mat(SURF_COLOR[k]!, i)])),
   road: Object.fromEntries(ROAD_ORDER.map((k, i) => [k, mat(ROAD_COLOR[k]!, 6 + i)])),
   building: new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }),
