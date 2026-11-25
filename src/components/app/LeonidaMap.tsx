@@ -9,7 +9,7 @@ interface Props {
   kindMap: Map<string, Kind>;
   found: string[];
   style: "night" | "day";
-  focusId?: string;
+  focusId?: string | undefined;
   onSelect: (loc: LeonidaLocation) => void;
 }
 

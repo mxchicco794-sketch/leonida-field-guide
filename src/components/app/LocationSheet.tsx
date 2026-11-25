@@ -4,7 +4,7 @@ import { progressActions, useProgress } from "@/lib/leonida/progress";
 import type { Kind, LeonidaLocation } from "@/lib/leonida/types";
 import { cn } from "@/lib/utils";
 
-export function LocationSheet({ loc, kind, onClose }: { loc: LeonidaLocation; kind?: Kind; onClose: () => void }) {
+export function LocationSheet({ loc, kind, onClose }: { loc: LeonidaLocation; kind?: Kind | undefined; onClose: () => void }) {
   const p = useProgress();
   const found = p.found.includes(loc.id);
   const fav = p.favorites.includes(loc.id);
