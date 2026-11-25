@@ -26,19 +26,25 @@ export async function runMainThread(): Promise<Processed> {
   return processGeometry({ land: land!.data, surface: surface!.data, roads: roads!.data, rails: rails!.data });
 }
 
-export interface Deps { cache: GeoCache; worker: () => Promise<Processed>; main: () => Promise<Processed>; now: () => number }
+export type Stage = "checking-cache" | "loading-cache" | "processing" | "processing-fallback";
+export interface Deps { cache: GeoCache; worker: () => Promise<Processed>; main: () => Promise<Processed>; now: () => number; onStage?: (s: Stage) => void }
 
-export async function loadProcessed(d: Deps = { cache: idbCache, worker: runWorker, main: runMainThread, now: Date.now }): Promise<Loaded> {
+export async function loadProcessed(opts: Partial<Deps> = {}): Promise<Loaded> {
+  const d: Deps = { cache: idbCache, worker: runWorker, main: runMainThread, now: Date.now, ...opts };
+  const stage = (x: Stage) => d.onStage?.(x);
+  stage("checking-cache");
   const cached = await d.cache.get().catch(() => null);
   const use = entryUsability(cached, d.now());
   const safe = (p: Processed) => { try { assertProcessed(p); return true; } catch { return false; } };
-  if (use === "fresh" && safe(cached!.data)) return { data: cached!.data, via: "cache" };
+  if (use === "fresh" && safe(cached!.data)) { stage("loading-cache"); return { data: cached!.data, via: "cache" }; }
+  stage("processing");
 
   let data: Processed, via: Via, workerError: string | undefined;
   try {
     data = await d.worker(); assertProcessed(data); via = "worker";
   } catch (e) {
     workerError = e instanceof Error ? e.message : String(e);
+    stage("processing-fallback");
     try { data = await d.main(); via = "main-thread"; }
     catch (e2) {
       if (use === "stale" && safe(cached!.data)) return { data: cached!.data, via: "cache", workerError }; // offline: keep last good copy

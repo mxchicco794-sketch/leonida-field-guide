@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { SOURCE_REPO } from "@/lib/leonida/api";
 import { useDataset } from "@/lib/leonida/queries";
-import { loadProcessed } from "@/lib/leonida/geo3d/load";
+import { loadProcessed, type Stage } from "@/lib/leonida/geo3d/load";
 
 const Leonida3D = lazy(() => import("@/components/app/Leonida3D"));
 
@@ -24,7 +24,8 @@ export const Route = createFileRoute("/map3d")({
 });
 
 function Map3DPage() {
-  const geo = useQuery({ queryKey: ["leonida", "geo3d"], queryFn: () => loadProcessed(), staleTime: Infinity, gcTime: 60_000, retry: 1 });
+  const [stage, setStage] = useState<Stage>("checking-cache");
+  const geo = useQuery({ queryKey: ["leonida", "geo3d"], queryFn: () => loadProcessed({ onStage: setStage }), staleTime: Infinity, gcTime: 60_000, retry: 1 });
   const { data } = useDataset();
   const msg = (t: string) => <div className="grid h-full place-items-center p-8 text-center text-sm text-muted-foreground">{t}</div>;
   return (
@@ -36,11 +37,31 @@ function Map3DPage() {
         </div>
       </div>
       {geo.isError ? msg("Could not load the map geometry. Connect to the internet and try again.")
-        : !geo.data ? msg("Loading and preparing coastline, roads and rails…")
+        : !geo.data ? <Loading stage={stage} />
         : <Suspense fallback={msg("Preparing 3D view…")}><Leonida3D data={geo.data.data} districts={data?.districts ?? []} /></Suspense>}
       <p className="glass absolute bottom-[76px] left-3 right-3 rounded-xl border border-border px-3 py-1.5 text-[10px] text-muted-foreground">
         Drag to pan, pinch/scroll to zoom, two fingers to tilt. Data: <a className="underline" href={SOURCE_REPO} target="_blank" rel="noreferrer">Open GTA 6 Map</a> · CC BY 4.0
       </p>
+    </div>
+  );
+}
+
+const STAGE_TEXT: Record<Stage, [string, string]> = {
+  "checking-cache": ["Checking saved map…", "Looking for an already prepared copy on this device."],
+  "loading-cache": ["Loading saved map…", "Using the copy prepared on this device."],
+  processing: ["Preparing the map for the first time…", "Downloading and processing coastline, roads and rails in the background. Next time it opens faster."],
+  "processing-fallback": ["Preparing the map (fallback)…", "Background processing failed; preparing on the main thread. The screen may feel slower."],
+};
+
+function Loading({ stage }: { stage: Stage }) {
+  const [title, sub] = STAGE_TEXT[stage];
+  return (
+    <div className="grid h-full place-items-center p-8 text-center" role="status" aria-live="polite">
+      <div className="flex flex-col items-center gap-3">
+        <span className="size-8 animate-spin rounded-full border-2 border-border border-t-primary" />
+        <p className="text-sm font-semibold">{title}</p>
+        <p className="max-w-64 text-xs text-muted-foreground">{sub}</p>
+      </div>
     </div>
   );
 }

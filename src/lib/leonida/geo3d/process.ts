@@ -6,7 +6,7 @@
 import { ShapeUtils, Vector2 } from "three";
 
 /** Bump when the processing output changes; invalidates the IndexedDB cache. */
-export const PROCESSOR_VERSION = 1;
+export const PROCESSOR_VERSION = 2;
 
 /** World transform: map units (x right, y down) → world X = x − CX, Z = y − CY, Y up. */
 export const CX = 496, CY = 480;
@@ -24,13 +24,59 @@ export const DEFAULT_ROAD_WIDTH = 0.6;
 export const ROAD_LIFT: Record<string, number> = { highway: 0.08, main: 0.06, minor: 0.04, street: 0.03 };
 
 export type Pt = [number, number];
+
+/**
+ * Road level of detail. Douglas–Peucker tolerance in map units per LOD;
+ * the far LOD keeps only arterial kinds. Endpoints and any vertex shared by
+ * two or more lines (junctions) are locked, so connections survive.
+ */
+export const LOD = { near: 0.25, far: 1.5 } as const;
+export const FAR_KINDS = ["highway", "main"];
+/** Camera distance (world units) above which the far LOD is shown. */
+export const FAR_DISTANCE = 260;
+
+const ptKey = (p: Pt) => `${p[0]},${p[1]}`;
+
+/** Points that must never be removed: line endpoints and vertices used by ≥2 lines. */
+export function junctions(lines: Pt[][]): Set<string> {
+  const seen = new Map<string, number>(), lock = new Set<string>();
+  for (const l of lines) {
+    lock.add(ptKey(l[0]!)); lock.add(ptKey(l[l.length - 1]!));
+    for (const k of new Set(l.map(ptKey))) seen.set(k, (seen.get(k) ?? 0) + 1);
+  }
+  for (const [k, n] of seen) if (n > 1) lock.add(k);
+  return lock;
+}
+
+function segDist(p: Pt, a: Pt, b: Pt) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
+  const t = L ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L)) : 0;
+  return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
+}
+
+/** Douglas–Peucker that never drops locked points (split at them first). */
+export function simplify(line: Pt[], tol: number, lock: Set<string>): Pt[] {
+  if (line.length < 3 || tol <= 0) return line;
+  const keep = new Uint8Array(line.length);
+  keep[0] = keep[line.length - 1] = 1;
+  for (let i = 1; i < line.length - 1; i++) if (lock.has(ptKey(line[i]!))) keep[i] = 1;
+  const dp = (i: number, j: number) => {
+    let m = -1, md = 0;
+    for (let k = i + 1; k < j; k++) { const d = segDist(line[k]!, line[i]!, line[j]!); if (d > md) { md = d; m = k; } }
+    if (m >= 0 && md > tol) { keep[m] = 1; dp(i, m); dp(m, j); }
+  };
+  let s = 0;
+  for (let i = 1; i < line.length; i++) if (keep[i]) { dp(s, i); s = i; }
+  return line.filter((_, i) => keep[i]);
+}
 export interface Mesh { position: Float32Array; index: Uint32Array }
 export interface Stats { rejectedPoints: number; rejectedRings: number; rejectedLines: number; polygons: number; lines: number }
 export interface Processed {
   version: number;
   land: Mesh;
   surface: Record<string, Mesh>;
-  roads: Record<string, Mesh>;
+  roads: Record<string, Mesh>; // near LOD: all kinds, light simplification
+  roadsFar: Record<string, Mesh>; // far LOD: FAR_KINDS only, strong simplification
   rails: Float32Array; // line segment pairs (x,y,z,x,y,z)
   bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
   stats: Stats;
@@ -165,15 +211,21 @@ export function processGeometry(raw: RawGeometry): Processed {
     for (const p of polys) addPolygon(b, p, LAND_H + 0.01, s);
   }
 
-  const roadB: Record<string, Builder> = {};
+  const byKind: Record<string, Pt[][]> = {};
   for (const { props, lines } of featureLines(raw.roads)) {
     const kind = String(props["kind"] ?? "street");
-    const b = (roadB[kind] ??= new Builder());
-    for (const l of lines) {
-      const c = cleanLine(l, s);
-      if (!c) continue;
-      addStrip(b, c, ROAD_WIDTH[kind] ?? DEFAULT_ROAD_WIDTH, LAND_H + (ROAD_LIFT[kind] ?? 0.03));
-      s.lines++;
+    for (const l of lines) { const c = cleanLine(l, s); if (c) { (byKind[kind] ??= []).push(c); s.lines++; } }
+  }
+  const lock = junctions(Object.values(byKind).flat());
+  const roadB: Record<string, Builder> = {}, farB: Record<string, Builder> = {};
+  for (const [kind, ls] of Object.entries(byKind)) {
+    const w = ROAD_WIDTH[kind] ?? DEFAULT_ROAD_WIDTH, h = LAND_H + (ROAD_LIFT[kind] ?? 0.03);
+    const nb = (roadB[kind] = new Builder());
+    for (const l of ls) addStrip(nb, simplify(l, LOD.near, lock), w, h);
+    if (FAR_KINDS.includes(kind)) {
+      const fb = (farB[kind] = new Builder());
+      // far view: strips widened 1.5× so arterials stay legible from altitude
+      for (const l of ls) addStrip(fb, simplify(l, LOD.far, lock), w * 1.5, h);
     }
   }
 
@@ -190,6 +242,7 @@ export function processGeometry(raw: RawGeometry): Processed {
     land: land.done(),
     surface: Object.fromEntries(Object.entries(surfB).map(([k, b]) => [k, b.done()])),
     roads: Object.fromEntries(Object.entries(roadB).map(([k, b]) => [k, b.done()])),
+    roadsFar: Object.fromEntries(Object.entries(farB).map(([k, b]) => [k, b.done()])),
     rails: new Float32Array(rail),
     bounds: { minX: EXTENT.minX - CX, maxX: EXTENT.maxX - CX, minZ: EXTENT.minY - CY, maxZ: EXTENT.maxY - CY },
     stats: s,
@@ -202,7 +255,7 @@ export function processGeometry(raw: RawGeometry): Processed {
 /** Shape-integrity check run before rendering (also on cached data). */
 export function assertProcessed(p: Processed) {
   if (!p || p.version !== PROCESSOR_VERSION) throw new Error("Processed geometry version mismatch");
-  const meshes = [p.land, ...Object.values(p.surface), ...Object.values(p.roads)];
+  const meshes = [p.land, ...Object.values(p.surface), ...Object.values(p.roads), ...Object.values(p.roadsFar)];
   for (const m of meshes) {
     if (!(m.position instanceof Float32Array) || !(m.index instanceof Uint32Array)) throw new Error("Bad buffer types");
     if (m.position.length % 3 || m.index.length % 3) throw new Error("Buffer length not a multiple of 3");
@@ -215,7 +268,7 @@ export function assertProcessed(p: Processed) {
 
 /** Collect the ArrayBuffers to transfer from a worker (zero-copy). */
 export function transferables(p: Processed): ArrayBuffer[] {
-  const ms = [p.land, ...Object.values(p.surface), ...Object.values(p.roads)];
+  const ms = [p.land, ...Object.values(p.surface), ...Object.values(p.roads), ...Object.values(p.roadsFar)];
   return [...ms.flatMap((m) => [m.position.buffer as ArrayBuffer, m.index.buffer as ArrayBuffer]), p.rails.buffer as ArrayBuffer];
 }
 

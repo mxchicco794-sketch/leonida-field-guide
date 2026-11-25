@@ -84,7 +84,7 @@ describe("worker preprocessing pipeline", () => {
     expect(Object.keys(p.surface)).toEqual(["building"]);
     expect(p.rails.length).toBe(6);
     expect(p.land.position[1]).toBeCloseTo(LAND_H);
-    expect(transferables(p).length).toBe(2 + 2 + 4 + 1);
+    expect(transferables(p).length).toBe(2 + 2 + 4 + 2 + 1);
   });
   it("skips invalid shapes and counts them", () => {
     const r = raw();
