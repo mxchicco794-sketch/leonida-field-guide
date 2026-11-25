@@ -13,7 +13,7 @@ const CACHE_NAME = "leonida-data-v1";
 const META_KEY = "leonida:syncedAt";
 
 /** Network-first fetch that falls back to the browser Cache Storage copy when offline. */
-async function fetchJson<T>(path: string): Promise<{ data: T; fromCache: boolean }> {
+export async function fetchJson<T>(path: string): Promise<{ data: T; fromCache: boolean }> {
   const url = assetUrl(path);
   const cache = typeof caches !== "undefined" ? await caches.open(CACHE_NAME) : null;
   try {

@@ -1,62 +1,49 @@
 import { Canvas } from "@react-three/fiber";
 import { MapControls } from "@react-three/drei";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import * as THREE from "three";
-import type { District, GeoFeature, Geometry } from "@/lib/leonida/types";
+import type { District } from "@/lib/leonida/types";
+import { CX, CY, LAND_H, type Mesh, type Processed } from "@/lib/leonida/geo3d/process";
 
-/** Map units (x right, y down) centred on the source map extent; y becomes world Z. */
-const CX = 496, CY = 480;
-const LAND_H = 1.2;
-const ROAD: Record<string, { c: string; h: number }> = {
-  highway: { c: "#f4d58d", h: 0.06 }, main: { c: "#e8c27a", h: 0.05 }, minor: { c: "#a89a80", h: 0.04 }, street: { c: "#6f6a62", h: 0.03 },
-};
+const ROAD_COLOR: Record<string, string> = { highway: "#f4d58d", main: "#e8c27a", minor: "#a89a80", street: "#6f6a62" };
+const ORDER = ["street", "minor", "main", "highway"];
 
-function lines(features: GeoFeature[]): [number, number][][] {
-  const out: [number, number][][] = [];
-  for (const f of features) {
-    const c = f.geometry.coordinates;
-    if (f.geometry.type === "LineString") out.push(c as [number, number][]);
-    else if (f.geometry.type === "MultiLineString") out.push(...(c as [number, number][][]));
-  }
-  return out;
-}
-
-function segGeo(paths: [number, number][][], lift: number) {
-  const pos: number[] = [];
-  for (const p of paths) for (let i = 1; i < p.length; i++) {
-    const a = p[i - 1]!, b = p[i]!;
-    pos.push(a[0] - CX, LAND_H + lift, a[1] - CY, b[0] - CX, LAND_H + lift, b[1] - CY);
-  }
+function meshGeo(m: Mesh) {
   const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("position", new THREE.BufferAttribute(m.position, 3));
+  g.setIndex(new THREE.BufferAttribute(m.index, 1));
+  g.computeVertexNormals();
+  g.computeBoundingSphere();
   return g;
 }
 
-function Land({ land }: { land: Geometry["land"] }) {
-  const geo = useMemo(() => {
-    const shapes: THREE.Shape[] = [];
-    for (const poly of land) {
-      const [outer, ...holes] = poly;
-      if (!outer || outer.length < 3) continue;
-      const s = new THREE.Shape(outer.map(([x, y]) => new THREE.Vector2(x - CX, -(y - CY))));
-      for (const h of holes) if (h.length >= 3) s.holes.push(new THREE.Path(h.map(([x, y]) => new THREE.Vector2(x - CX, -(y - CY)))));
-      shapes.push(s);
-    }
-    const g = new THREE.ExtrudeGeometry(shapes, { depth: LAND_H, bevelEnabled: false });
-    g.rotateX(-Math.PI / 2);
-    return g;
-  }, [land]);
-  return <mesh geometry={geo}><meshStandardMaterial color="#2a2724" roughness={0.9} /></mesh>;
+/** Dispose GPU buffers when the geometry set changes or the view unmounts. */
+function useDisposable<T extends { dispose(): void }>(items: T[]) {
+  useEffect(() => () => items.forEach((i) => i.dispose()), [items]);
 }
 
-export default function Leonida3D({ geometry, districts }: { geometry: Geometry; districts: District[] }) {
-  const roads = useMemo(() => {
-    const by: Record<string, GeoFeature[]> = {};
-    for (const f of geometry.roads.features) (by[f.properties["kind"] ?? "street"] ??= []).push(f);
-    return Object.entries(by).map(([k, fs]) => ({ k, geo: segGeo(lines(fs), ROAD[k]?.h ?? 0.03), c: ROAD[k]?.c ?? "#6f6a62" }));
-  }, [geometry]);
-  const rails = useMemo(() => segGeo(lines(geometry.rails.features), 0.07), [geometry]);
-  const dist = useMemo(() => segGeo(districts.flatMap((d) => d.rings.map((r) => [...r, r[0]!])), 0.1), [districts]);
+export default function Leonida3D({ data, districts }: { data: Processed; districts: District[] }) {
+  const land = useMemo(() => meshGeo(data.land), [data]);
+  const roads = useMemo(() => Object.entries(data.roads)
+    .sort(([a], [b]) => ORDER.indexOf(a) - ORDER.indexOf(b))
+    .map(([k, m], i) => ({ k, geo: meshGeo(m), c: ROAD_COLOR[k] ?? "#6f6a62", i })), [data]);
+  const rails = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(data.rails, 3));
+    return g;
+  }, [data]);
+  const dist = useMemo(() => {
+    const pos: number[] = [];
+    for (const d of districts) for (const r of d.rings) for (let i = 0; i < r.length; i++) {
+      const a = r[i]!, b = r[(i + 1) % r.length]!;
+      pos.push(a[0] - CX, LAND_H + 0.12, a[1] - CY, b[0] - CX, LAND_H + 0.12, b[1] - CY);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    return g;
+  }, [districts]);
+  useDisposable(useMemo(() => [land, rails, ...roads.map((r) => r.geo)], [land, rails, roads]));
+  useDisposable(useMemo(() => [dist], [dist]));
 
   return (
     <div className="h-full w-full" data-scene-ready>
@@ -65,8 +52,12 @@ export default function Leonida3D({ geometry, districts }: { geometry: Geometry;
         <ambientLight intensity={0.6} />
         <directionalLight position={[200, 400, 150]} intensity={1.4} />
         <mesh rotation-x={-Math.PI / 2} position-y={-0.05}><planeGeometry args={[1400, 1400]} /><meshStandardMaterial color="#10232b" /></mesh>
-        <Land land={geometry.land} />
-        {roads.map((r) => <lineSegments key={r.k} geometry={r.geo}><lineBasicMaterial color={r.c} /></lineSegments>)}
+        <mesh geometry={land}><meshStandardMaterial color="#2a2724" roughness={0.9} side={THREE.DoubleSide} /></mesh>
+        {roads.map((r) => (
+          <mesh key={r.k} geometry={r.geo} renderOrder={1 + r.i}>
+            <meshBasicMaterial color={r.c} polygonOffset polygonOffsetFactor={-1 - r.i} polygonOffsetUnits={-1 - r.i} />
+          </mesh>
+        ))}
         <lineSegments geometry={rails}><lineBasicMaterial color="#c0c0c0" /></lineSegments>
         <lineSegments geometry={dist}><lineBasicMaterial color="#e5383b" transparent opacity={0.6} /></lineSegments>
         <MapControls makeDefault enableDamping maxPolarAngle={1.3} minDistance={20} maxDistance={900} />

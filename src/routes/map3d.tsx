@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { lazy, Suspense } from "react";
 import { SOURCE_REPO } from "@/lib/leonida/api";
-import { geometryQuery, useDataset } from "@/lib/leonida/queries";
+import { useDataset } from "@/lib/leonida/queries";
+import { loadProcessed } from "@/lib/leonida/geo3d/load";
 
 const Leonida3D = lazy(() => import("@/components/app/Leonida3D"));
 
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/map3d")({
 });
 
 function Map3DPage() {
-  const geo = useQuery(geometryQuery);
+  const geo = useQuery({ queryKey: ["leonida", "geo3d"], queryFn: () => loadProcessed(), staleTime: Infinity, gcTime: 60_000, retry: 1 });
   const { data } = useDataset();
   const msg = (t: string) => <div className="grid h-full place-items-center p-8 text-center text-sm text-muted-foreground">{t}</div>;
   return (
@@ -35,8 +36,8 @@ function Map3DPage() {
         </div>
       </div>
       {geo.isError ? msg("Could not load the map geometry. Connect to the internet and try again.")
-        : !geo.data ? msg("Loading coastline, roads and rails…")
-        : <Suspense fallback={msg("Preparing 3D view…")}><Leonida3D geometry={geo.data} districts={data?.districts ?? []} /></Suspense>}
+        : !geo.data ? msg("Loading and preparing coastline, roads and rails…")
+        : <Suspense fallback={msg("Preparing 3D view…")}><Leonida3D data={geo.data.data} districts={data?.districts ?? []} /></Suspense>}
       <p className="glass absolute bottom-[76px] left-3 right-3 rounded-xl border border-border px-3 py-1.5 text-[10px] text-muted-foreground">
         Drag to pan, pinch/scroll to zoom, two fingers to tilt. Data: <a className="underline" href={SOURCE_REPO} target="_blank" rel="noreferrer">Open GTA 6 Map</a> · CC BY 4.0
       </p>

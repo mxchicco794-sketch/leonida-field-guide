@@ -5,3 +5,5 @@
 - [ ] Phase 4: full search page, district completion, next-nearby, favorites search
 - [ ] Phase 5: sync (change detection, validation, backup/rollback), offline tiles/screenshots cache
 - [ ] Phase 6: Capacitor Android prep, Italian i18n, back button, QA
+- [x] 3D Phase 1: worker preprocessing, road strips, IndexedDB cache, validation, fallback
+- [ ] 3D Phase 2: render surface layers (flat buildings/parks/sand) — awaiting approval
