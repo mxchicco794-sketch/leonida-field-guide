@@ -7,10 +7,10 @@ import { useDataset } from "@/lib/leonida/queries";
 export const Route = createFileRoute("/favorites")({
   head: () => ({
     meta: [
-      { title: "Favorites — Leonida Companion" },
-      { name: "description", content: "Your saved Leonida locations, stored on this device." },
+      { title: "Preferiti — Leonida Companion" },
+      { name: "description", content: "I luoghi di Leonida che hai salvato su questo dispositivo." },
       { property: "og:title", content: "Favorites — Leonida Companion" },
-      { property: "og:description", content: "Your saved Leonida locations." },
+      { property: "og:description", content: "I tuoi luoghi salvati a Leonida." },
     ],
   }),
   component: Favorites,
@@ -22,9 +22,9 @@ function Favorites() {
   const items = (data?.locations ?? []).filter((l) => favorites.includes(l.id));
   return (
     <div>
-      <PageHeader eyebrow="Saved" title="Favorites" />
+      <PageHeader eyebrow="Salvati" title="Preferiti" />
       {items.length === 0 ? (
-        <StateMessage title="No favorites yet" body="Tap a pin on the map and choose Favorite to save it here." />
+        <StateMessage title="Non hai ancora preferiti" body="Tocca un segnaposto sulla mappa e scegli «Aggiungi ai preferiti» per salvarlo qui." />
       ) : (
         <ul className="space-y-2 px-5">
           {items.map((l) => {
@@ -36,7 +36,7 @@ function Favorites() {
                   <p className="truncate font-semibold">{l.name}</p>
                   <p className="truncate text-xs text-muted-foreground">{[k?.name, l.area].filter(Boolean).join(" · ")}</p>
                 </Link>
-                <button aria-label="Remove favorite" onClick={() => progressActions.toggleFavorite(l.id)} className="text-primary"><Heart className="size-5 fill-current" /></button>
+                <button aria-label="Rimuovi dai preferiti" onClick={() => progressActions.toggleFavorite(l.id)} className="text-primary"><Heart className="size-5 fill-current" /></button>
               </li>
             );
           })}
