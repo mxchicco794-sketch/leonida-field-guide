@@ -73,20 +73,20 @@ function DiagnosticPanel({ mode, routeError, onClose }: Props & { onClose: () =>
   return <section aria-label="Diagnostica 3D" className="pointer-events-auto max-h-[48dvh] overflow-y-auto overscroll-contain rounded-lg border border-border bg-background p-3 text-xs text-foreground shadow-xl">
     <div className="mb-2 flex items-center justify-between"><strong>Diagnostica · {modeLabel(mode)}</strong><Button variant="ghost" size="icon" onClick={onClose} aria-label="Chiudi diagnostica"><X /></Button></div>
     <dl className="space-y-1">
-      {row("CPU scena", byteLabel(snapshot.cpu))}{row("CPU near", byteLabel(snapshot.nearCpu))}{row("CPU regioni", byteLabel(snapshot.regionalCpu))}
-      {row("GPU buffer GL", byteLabel(snapshot.gpu))}{row("GPU near", byteLabel(snapshot.nearGpu))}
-      {row("Frame medio / p50 (ms)", `${valueLabel(frames.mean)} / ${valueLabel(frames.p50)}`)}
-      {row("Frame p95 / p99 (ms)", `${valueLabel(frames.p95)} / ${valueLabel(frames.p99)}`)}
-      {row("Draw calls / triangoli", `${valueLabel(snapshot.calls)} / ${valueLabel(snapshot.triangles)}`)}
-      {row("Residenti / richieste", `${valueLabel(snapshot.resident)} / ${valueLabel(snapshot.required)}`)}
+      {row("CPU scena", byteLabel(snapshot.cpu))}{row("CPU dettagli ravvicinati", byteLabel(snapshot.nearCpu))}{row("CPU regioni", byteLabel(snapshot.regionalCpu))}
+      {row("GPU buffer GL", byteLabel(snapshot.gpu))}{row("GPU dettagli ravvicinati", byteLabel(snapshot.nearGpu))}
+      {row("Fotogrammi medi / mediana (ms)", `${valueLabel(frames.mean)} / ${valueLabel(frames.p50)}`)}
+      {row("Fotogrammi p95 / p99 (ms)", `${valueLabel(frames.p95)} / ${valueLabel(frames.p99)}`)}
+      {row("Chiamate di disegno / triangoli", `${valueLabel(snapshot.calls)} / ${valueLabel(snapshot.triangles)}`)}
+      {row("Elementi presenti / richiesti", `${valueLabel(snapshot.resident)} / ${valueLabel(snapshot.required)}`)}
       {row("Preparate / in attesa", `${valueLabel(snapshot.prepared)} / ${valueLabel(snapshot.pending)}`)}
     </dl>
-    <p className="mt-2 text-[10px] text-muted-foreground">CPU: geometria in scena, non heap totale. GPU: buffer GL, non VRAM totale. Frame: {frames === snapshot ? "sonda 3D live; media N/D" : "intervalli rAF della registrazione"}. Altre richieste/errori: N/D.</p>
+    <p className="mt-2 text-[10px] text-muted-foreground">CPU: geometria presente nella scena, non memoria heap totale. GPU: buffer GL, non VRAM totale. Fotogrammi: {frames === snapshot ? "sonda 3D in tempo reale; media non disponibile" : "intervalli di requestAnimationFrame registrati"}. Altre richieste/errori: N/D.</p>
     {snapshot.errors.map((error, i) => <p key={i} className="mt-1 break-words text-destructive">{error}</p>)}
     <div className="mt-3 grid grid-cols-2 gap-2">
       <Button size="sm" variant="outline" disabled={mode !== "legacy" || progress !== null} onClick={() => record("legacy")}>REGISTRA MODALITÀ CLASSICA</Button>
       <Button size="sm" variant="outline" disabled={mode !== "regional" || progress !== null} onClick={() => record("regional")}>REGISTRA MODALITÀ REGIONALE</Button>
-      <Button size="sm" variant="ghost" onClick={reset}><RotateCcw /> RESET CONFRONTO</Button>
+      <Button size="sm" variant="ghost" onClick={reset}><RotateCcw /> AZZERA CONFRONTO</Button>
       <Button size="sm" variant="secondary" disabled={!results.length || progress !== null} onClick={() => void copy()}><Copy /> COPIA REPORT</Button>
     </div>
     {progress && <p role="status" className="mt-2">{progress.phase === "stabilizing" ? "Attendo scena ferma e caricamenti completati…" : `Registrazione: ${Math.floor(progress.elapsed / 1000)} / 30 s`}</p>}
