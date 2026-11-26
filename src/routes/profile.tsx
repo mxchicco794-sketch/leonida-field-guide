@@ -8,7 +8,7 @@ export const Route = createFileRoute("/profile")({
     meta: [
       { title: "Profilo — Leonida Companion" },
       { name: "description", content: "I tuoi progressi sul dispositivo, lo stato della sincronizzazione e le informazioni sull'app." },
-      { property: "og:title", content: "Profile — Leonida Companion" },
+      { property: "og:title", content: "Profilo — Leonida Companion" },
       { property: "og:description", content: "I tuoi progressi e lo stato della sincronizzazione." },
     ],
   }),
@@ -24,7 +24,7 @@ function Profile() {
       <div className="space-y-3 px-5">
         <Row label="Luoghi trovati" value={found.length} />
         <Row label="Preferiti" value={favorites.length} />
-        <Row label="Data source" value={data ? (data.source === "cache" ? "Copia offline" : "In diretta") : "—"} />
+        <Row label="Fonte dei dati" value={data ? (data.source === "cache" ? "Copia offline" : "In diretta") : "—"} />
         <Row label="Ultima sincronizzazione" value={data ? new Date(data.syncedAt).toLocaleString("it-IT") : "—"} />
         <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
           <p className="font-semibold text-foreground">Come vengono salvati i tuoi dati</p>
