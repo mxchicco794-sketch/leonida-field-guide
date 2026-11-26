@@ -3,7 +3,7 @@ name: Leonida Android debug APK
 on:
   workflow_dispatch:
   push:
-    branches: [main, android-apk-checkpoint-26]
+    branches: [main, android-apk-checkpoint-26, android-apk-italiano]
     paths:
       - "src/**"
       - "public/**"
