@@ -4,11 +4,11 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { to: "/map", label: "Map", icon: Map },
-  { to: "/", label: "Discover", icon: Compass },
-  { to: "/collectibles", label: "Collectibles", icon: Gem },
-  { to: "/favorites", label: "Favorites", icon: Heart },
-  { to: "/profile", label: "Profile", icon: User },
+  { to: "/map", label: "Mappa", icon: Map },
+  { to: "/", label: "Esplora", icon: Compass },
+  { to: "/collectibles", label: "Collezionabili", icon: Gem },
+  { to: "/favorites", label: "Preferiti", icon: Heart },
+  { to: "/profile", label: "Profilo", icon: User },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -49,11 +49,11 @@ export function PageHeader({ eyebrow, title, children }: { eyebrow: string; titl
 export function Attribution() {
   return (
     <p className="px-5 py-6 text-center text-[11px] leading-relaxed text-muted-foreground">
-      Map data & tiles:{" "}
+      Dati e tessere della mappa:{" "}
       <a className="underline hover:text-foreground" href="https://github.com/fbritoferreira/gta6" target="_blank" rel="noreferrer">Open GTA 6 Map</a>{" "}
-      by fbritoferreira, licensed{" "}
+      by fbritoferreira, con licenza{" "}
       <a className="underline hover:text-foreground" href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>.
-      Unofficial fan project, not affiliated with Rockstar Games.
+      Progetto fan non ufficiale, non affiliato a Rockstar Games.
     </p>
   );
 }
