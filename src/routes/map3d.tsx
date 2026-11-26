@@ -58,9 +58,9 @@ function Map3DPage() {
       <div className="absolute inset-x-0 top-0 z-10 flex items-center gap-2 p-3">
         <Button asChild variant="outline" size="icon" className="glass shrink-0 rounded-full"><Link to="/map" search={returnId ? { id: returnId } : {}} aria-label="Torna alla mappa 2D"><ArrowLeft className="size-4" /></Link></Button>
         <div className="glass rounded-full border border-border px-3 py-2 text-xs">
-          <span className="font-semibold text-primary">3D · Stilizzata</span> <span className="text-muted-foreground">— non è la mappa del gioco</span>
+          <span className="font-semibold text-primary">3D · Stilizzata</span> <span className="text-muted-foreground">— non è la mappa del videogioco</span>
         </div>
-        <Button asChild variant="outline" size="icon" className="glass shrink-0 rounded-full"><Link to="/map3d" search={{ ...(id ? { id } : {}), ...(detail ? {} : { detail: "regional" }) }} aria-label={detail ? "Usa il caricamento classico" : "Prova il caricamento regionale"} title={detail ? "Usa il caricamento classico" : "Prova il caricamento regionale"}><Layers className="size-4" /></Link></Button>
+        <Button asChild variant="outline" size="icon" className="glass shrink-0 rounded-full"><Link to="/map3d" search={{ ...(id ? { id } : {}), ...(detail ? {} : { detail: "regional" }) }} aria-label={detail ? "Usa il caricamento standard" : "Prova il caricamento per regioni"} title={detail ? "Usa il caricamento standard" : "Prova il caricamento per regioni"}><Layers className="size-4" /></Link></Button>
       </div>
       <div className="absolute inset-x-0 top-16 z-10 px-3">
         <div className="flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none]" aria-label="Filtri delle categorie 3D">
@@ -81,9 +81,9 @@ function Map3DPage() {
       </div>
       {geo.isError ? msg("Impossibile caricare la geometria della mappa. Connettiti a Internet e riprova.")
         : !geo.data ? <Loading stage={stage} />
-        : <Suspense fallback={msg("Preparazione della vista 3D…")}><Leonida3D key={detail ?? "legacy"} data={geo.data.mode === "regional" ? geo.data.prepared.global : geo.data.loaded.data} {...(geo.data.mode === "regional" ? { regional: geo.data.prepared } : {})} districts={data?.districts ?? []} pins={{ locations: visible, kindMap, found, focusId: id, onSelect: select }} /></Suspense>}
+        : <Suspense fallback={msg("Preparazione della mappa 3D…")}><Leonida3D key={detail ?? "legacy"} data={geo.data.mode === "regional" ? geo.data.prepared.global : geo.data.loaded.data} {...(geo.data.mode === "regional" ? { regional: geo.data.prepared } : {})} districts={data?.districts ?? []} pins={{ locations: visible, kindMap, found, focusId: id, onSelect: select }} /></Suspense>}
       <p className="glass absolute bottom-[76px] left-3 right-3 rounded-xl border border-border px-3 py-1.5 text-[10px] text-muted-foreground">
-        Le altezze degli edifici sono stime stilizzate, non dati ufficiali di GTA VI. Trascina per spostarti, pizzica per ingrandire e usa due dita per inclinare. Dati: <a className="underline" href={SOURCE_REPO} target="_blank" rel="noreferrer">Open GTA 6 Map</a> · CC BY 4.0
+        Le altezze degli edifici sono stime illustrative, non dati ufficiali di GTA VI. Trascina per spostarti, pizzica per ingrandire e usa due dita per inclinare. Fonte dati: <a className="underline" href={SOURCE_REPO} target="_blank" rel="noreferrer">Open GTA 6 Map</a> · CC BY 4.0
       </p>
       {selected && <LocationSheet loc={selected} kind={kindMap.get(selected.kind)} onClose={() => setSelected(null)} />}
       {Mobile3DDiagnostics && <Suspense fallback={null}><Mobile3DDiagnostics mode={geo.data?.mode ?? null} {...(geo.isError ? { routeError: "Caricamento geometria fallito." } : {})} /></Suspense>}
@@ -95,7 +95,7 @@ const STAGE_TEXT: Record<Stage, [string, string]> = {
   "checking-cache": ["Controllo della mappa salvata…", "Ricerca di una copia già preparata su questo dispositivo."],
   "loading-cache": ["Caricamento della mappa salvata…", "Viene utilizzata la copia preparata su questo dispositivo."],
   processing: ["Prima preparazione della mappa…", "Download ed elaborazione in background di coste, strade e ferrovie. La prossima apertura sarà più rapida."],
-  "processing-fallback": ["Preparazione della mappa (modalità alternativa)…", "L’elaborazione in background non è riuscita: la mappa viene preparata sul thread principale. La schermata potrebbe risultare meno fluida."],
+  "processing-fallback": ["Preparazione della mappa (modalità di riserva)…", "L’elaborazione in background non è riuscita: la mappa viene preparata sul processo principale. La schermata potrebbe risultare meno fluida."],
 };
 
 function Loading({ stage }: { stage: Stage }) {
