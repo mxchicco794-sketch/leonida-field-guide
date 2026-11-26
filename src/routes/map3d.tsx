@@ -23,7 +23,7 @@ export const Route = createFileRoute("/map3d")({
     meta: [
       { title: "Mappa 3D stilizzata — Leonida Companion" },
       { name: "description", content: "Vista 3D stilizzata facoltativa di Leonida, realizzata usando coste, strade, ferrovie e distretti di Open GTA 6 Map." },
-      { property: "og:title", content: "Stylized 3D Map — Leonida Companion" },
+      { property: "og:title", content: "Mappa 3D stilizzata — Leonida Companion" },
       { property: "og:description", content: "Vista 3D stilizzata di Leonida basata sui dati di Open GTA 6 Map." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
