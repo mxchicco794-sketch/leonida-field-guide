@@ -8,3 +8,4 @@
 - [x] 3D Phase 1: worker preprocessing, road strips, IndexedDB cache, validation, fallback
 - [x] 3D Phase 1.5: road LOD, surface colours, shared materials, loading states
 - [x] 3D Phase 2: stylized extruded buildings (chunked + far LOD), all surface layers
+- [x] 3D Phase 3 Option A: 3D-only filters, batched pins/clusters, gesture-safe tap lookup, selected-location return to 2D, tests and validation

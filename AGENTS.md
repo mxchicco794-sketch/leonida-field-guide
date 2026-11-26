@@ -33,3 +33,6 @@ use the editor.
 - User progress (found/favorites) lives in the local store `src/lib/leonida/progress.ts`; keep all reads/writes there so a future cloud sync can replace it in one place.
 - Map pin clustering, district point-in-polygon and search folding are pure TS in `src/lib/leonida/cluster.ts` (tested); pins redraw only on zoomend/data change, never per pan frame, to keep touch dragging smooth.
 - 3D map geometry is preprocessed by pure TS in `src/lib/leonida/geo3d/process.ts` (run in a Web Worker, main-thread fallback in `load.ts`) and cached in IndexedDB keyed by `PROCESSOR_VERSION`; bump that constant whenever processing output changes so stale caches are discarded.
+- Phase 3 pins use the 3D-only `filters.ts` adapter and pure `geo3d/pins.ts` rules; keep the 2D implementation untouched to preserve its behavior.
+- `Leonida3DPins` owns two depth-independent point batches; rebuild on zoom-step/data changes and project a spatial lookup only on taps, so gestures do not trigger selection or per-frame React updates.
+- Development-only `window.__pins3d.snapshot()` and `.measure()` expose live pin projections/counts and identical-camera baseline/overlay render statistics for verification; never use them as production state.

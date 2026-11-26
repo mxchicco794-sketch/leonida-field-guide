@@ -1,7 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
-import { lazy, Suspense, useState } from "react";
+import { ArrowLeft, EyeOff } from "lucide-react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { LocationSheet } from "@/components/app/LocationSheet";
+import { filterLocations } from "@/lib/leonida/filters";
+import { useProgress } from "@/lib/leonida/progress";
+import type { Group, LeonidaLocation } from "@/lib/leonida/types";
 import { SOURCE_REPO } from "@/lib/leonida/api";
 import { useDataset } from "@/lib/leonida/queries";
 import { loadProcessed, type Stage } from "@/lib/leonida/geo3d/load";
@@ -10,6 +15,7 @@ const Leonida3D = lazy(() => import("@/components/app/Leonida3D"));
 
 export const Route = createFileRoute("/map3d")({
   ssr: false,
+  validateSearch: (s: Record<string, unknown>): { id?: string } => typeof s["id"] === "string" ? { id: s["id"] } : {},
   head: () => ({
     meta: [
       { title: "Stylized 3D Map — Leonida Companion" },
@@ -24,24 +30,57 @@ export const Route = createFileRoute("/map3d")({
 });
 
 function Map3DPage() {
+  const { id } = Route.useSearch();
   const [stage, setStage] = useState<Stage>("checking-cache");
   const geo = useQuery({ queryKey: ["leonida", "geo3d"], queryFn: () => loadProcessed({ onStage: setStage }), staleTime: Infinity, gcTime: 60_000, retry: 1 });
-  const { data } = useDataset();
+  const { data, kindMap, isError } = useDataset();
+  const { found } = useProgress();
+  const [groups, setGroups] = useState<Group[]>(["Collectibles", "Activities"]);
+  const [district, setDistrict] = useState("");
+  const [hideFound, setHideFound] = useState(false);
+  const [selected, setSelected] = useState<LeonidaLocation | null>(null);
+  const [returnId, setReturnId] = useState<string | undefined>(id);
+  const visible = useMemo(() => filterLocations(data?.locations ?? [], {
+    groups, kindMap, district: data?.districts.find((d) => d.name === district), hideFound, found, focusId: id,
+  }), [data, groups, kindMap, district, hideFound, found, id]);
+  useEffect(() => {
+    const loc = data?.locations.find((l) => l.id === id);
+    if (loc) { setSelected(loc); setReturnId(loc.id); }
+  }, [data, id]);
+  const select = (loc: LeonidaLocation) => { setSelected(loc); setReturnId(loc.id); };
   const msg = (t: string) => <div className="grid h-full place-items-center p-8 text-center text-sm text-muted-foreground">{t}</div>;
   return (
     <div className="fixed inset-0 mx-auto max-w-md pb-[68px]">
       <div className="absolute inset-x-0 top-0 z-10 flex items-center gap-2 p-3">
-        <Link to="/map" aria-label="Back to 2D map" className="glass rounded-full border border-border p-2.5"><ArrowLeft className="size-4" /></Link>
+        <Button asChild variant="outline" size="icon" className="glass shrink-0 rounded-full"><Link to="/map" search={returnId ? { id: returnId } : {}} aria-label="Back to 2D map"><ArrowLeft className="size-4" /></Link></Button>
         <div className="glass rounded-full border border-border px-3 py-2 text-xs">
           <span className="font-semibold text-primary">3D · Stylized</span> <span className="text-muted-foreground">— not the in-game map</span>
         </div>
       </div>
+      <div className="absolute inset-x-0 top-16 z-10 px-3">
+        <div className="flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none]" aria-label="3D category filters">
+          {(["Collectibles", "Activities", "Crime", "Places", "Other"] as Group[]).map((group) => (
+            <Button key={group} size="sm" variant={groups.includes(group) ? "default" : "outline"}
+              aria-pressed={groups.includes(group)} className="shrink-0 rounded-full"
+              onClick={() => setGroups(groups.includes(group) ? groups.filter((g) => g !== group) : [...groups, group])}>{group}</Button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <select aria-label="Filter 3D by district" value={district} onChange={(e) => setDistrict(e.target.value)} className="glass h-9 min-w-0 flex-1 rounded-md border border-border px-2 text-xs">
+            <option value="">All districts</option>
+            {data?.districts.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
+          </select>
+          <Button size="sm" variant="outline" className="glass h-9 shrink-0" aria-pressed={hideFound} onClick={() => setHideFound(!hideFound)}><EyeOff /> Hide found</Button>
+        </div>
+        {isError && !data && <p className="mt-2 text-xs text-muted-foreground">Locations could not load. The 3D geometry remains available.</p>}
+      </div>
       {geo.isError ? msg("Could not load the map geometry. Connect to the internet and try again.")
         : !geo.data ? <Loading stage={stage} />
-        : <Suspense fallback={msg("Preparing 3D view…")}><Leonida3D data={geo.data.data} districts={data?.districts ?? []} /></Suspense>}
+        : <Suspense fallback={msg("Preparing 3D view…")}><Leonida3D data={geo.data.data} districts={data?.districts ?? []} pins={{ locations: visible, kindMap, found, focusId: id, onSelect: select }} /></Suspense>}
       <p className="glass absolute bottom-[76px] left-3 right-3 rounded-xl border border-border px-3 py-1.5 text-[10px] text-muted-foreground">
         Building heights are stylized estimates, not official GTA VI data. Drag to pan, pinch to zoom, two fingers to tilt. Data: <a className="underline" href={SOURCE_REPO} target="_blank" rel="noreferrer">Open GTA 6 Map</a> · CC BY 4.0
       </p>
+      {selected && <LocationSheet loc={selected} kind={kindMap.get(selected.kind)} onClose={() => setSelected(null)} />}
     </div>
   );
 }

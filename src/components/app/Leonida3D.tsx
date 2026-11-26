@@ -5,6 +5,7 @@ import * as THREE from "three";
 import type { District } from "@/lib/leonida/types";
 import { CX, CY, FAR_DISTANCE, LAND_H, type Mesh, type Processed } from "@/lib/leonida/geo3d/process";
 import type { BMesh } from "@/lib/leonida/geo3d/buildings";
+import Leonida3DPins, { type PinProps } from "./Leonida3DPins";
 
 /** Near mode: building chunks farther than this from the view target are hidden. */
 const CHUNK_RADIUS = 190;
@@ -56,7 +57,7 @@ function LodSwitch({ near, far, chunks }: { near: React.RefObject<THREE.Group | 
   return null;
 }
 
-export default function Leonida3D({ data, districts }: { data: Processed; districts: District[] }) {
+export default function Leonida3D({ data, districts, pins }: { data: Processed; districts: District[]; pins?: PinProps }) {
   // Built once per processed dataset; GPU buffers freed on change/unmount.
   const g = useMemo(() => {
     const rails = new THREE.BufferGeometry();
@@ -106,6 +107,7 @@ export default function Leonida3D({ data, districts }: { data: Processed; distri
         <lineSegments geometry={dist} material={M.dist} renderOrder={21} />
         <LodSwitch near={nearRef} far={farRef} chunks={chunkRef} />
         <MapControls makeDefault enableDamping dampingFactor={0.12} maxPolarAngle={1.3} minDistance={20} maxDistance={900} />
+        {pins && <Leonida3DPins {...pins} />}
       </Canvas>
     </div>
   );
