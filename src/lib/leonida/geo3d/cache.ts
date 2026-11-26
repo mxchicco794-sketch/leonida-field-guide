@@ -4,7 +4,7 @@ import { PROCESSOR_VERSION, type Processed } from "./process";
 export const CACHE_KEY = `geo3d:v${PROCESSOR_VERSION}`;
 export const MAX_AGE_MS = 7 * 24 * 3600 * 1000;
 export interface CacheEntry { key: string; createdAt: number; data: Processed }
-export interface GeoCache { get(): Promise<CacheEntry | null>; put(e: CacheEntry): Promise<void> }
+export interface GeoCache { get(): Promise<CacheEntry | null>; put(e: CacheEntry, signal?: AbortSignal): Promise<void> }
 
 export type Usability = "fresh" | "stale" | "invalid";
 export function entryUsability(e: CacheEntry | null | undefined, now: number, key = CACHE_KEY): Usability {
@@ -21,11 +21,17 @@ function open(): Promise<IDBDatabase> {
     r.onerror = () => rej(r.error);
   });
 }
-const tx = <T,>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRequest<T>) =>
+const tx = <T,>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRequest<T>, signal?: AbortSignal) =>
   open().then((db) => new Promise<T>((res, rej) => {
-    const q = fn(db.transaction(STORE, mode).objectStore(STORE));
-    q.onsuccess = () => { res(q.result); db.close(); };
-    q.onerror = () => { rej(q.error); db.close(); };
+    if (signal?.aborted) { db.close(); rej(new DOMException("Map cache write cancelled", "AbortError")); return; }
+    const transaction = db.transaction(STORE, mode);
+    const abort = () => transaction.abort();
+    const cleanup = () => { signal?.removeEventListener("abort", abort); db.close(); };
+    transaction.oncomplete = () => { cleanup(); res(q.result); };
+    transaction.onabort = () => { cleanup(); rej(signal?.aborted ? new DOMException("Map cache write cancelled", "AbortError") : transaction.error ?? new Error("Map cache transaction aborted")); };
+    transaction.onerror = () => { /* onabort settles the failed transaction. */ };
+    signal?.addEventListener("abort", abort, { once: true });
+    const q = fn(transaction.objectStore(STORE));
   }));
 
 /** IndexedDB adapter: one slot; entries from older processor versions are deleted on read. */
@@ -36,8 +42,9 @@ export const idbCache: GeoCache = {
     for (const k of keys) if (k !== CACHE_KEY) await tx("readwrite", (s) => s.delete(k));
     return ((await tx("readonly", (s) => s.get(CACHE_KEY))) as CacheEntry | undefined) ?? null;
   },
-  async put(e) {
+  async put(e, signal) {
+    if (signal?.aborted) throw new DOMException("Map cache write cancelled", "AbortError");
     if (typeof indexedDB === "undefined") return;
-    await tx("readwrite", (s) => s.put(e, e.key));
+    await tx("readwrite", (s) => s.put(e, e.key), signal);
   },
 };

@@ -32,7 +32,7 @@ export const Route = createFileRoute("/map3d")({
 function Map3DPage() {
   const { id } = Route.useSearch();
   const [stage, setStage] = useState<Stage>("checking-cache");
-  const geo = useQuery({ queryKey: ["leonida", "geo3d"], queryFn: () => loadProcessed({ onStage: setStage }), staleTime: Infinity, gcTime: 60_000, retry: 1 });
+  const geo = useQuery({ queryKey: ["leonida", "geo3d"], queryFn: ({ signal }) => loadProcessed({ onStage: setStage, signal }), staleTime: Infinity, gcTime: 60_000, retry: 1 });
   const { data, kindMap, isError } = useDataset();
   const { found } = useProgress();
   const [groups, setGroups] = useState<Group[]>(["Collectibles", "Activities"]);

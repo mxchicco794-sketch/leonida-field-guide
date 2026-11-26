@@ -13,17 +13,25 @@ const CACHE_NAME = "leonida-data-v1";
 const META_KEY = "leonida:syncedAt";
 
 /** Network-first fetch that falls back to the browser Cache Storage copy when offline. */
-export async function fetchJson<T>(path: string): Promise<{ data: T; fromCache: boolean }> {
+export async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<{ data: T; fromCache: boolean }> {
+  const checkAbort = () => { if (signal?.aborted) throw new DOMException("Map download cancelled", "AbortError"); };
+  checkAbort();
   const url = assetUrl(path);
   const cache = typeof caches !== "undefined" ? await caches.open(CACHE_NAME) : null;
+  checkAbort();
   try {
-    const res = await fetch(url, { cache: "no-cache" });
+    const res = await fetch(url, { cache: "no-cache", ...(signal ? { signal } : {}) });
     if (!res.ok) throw new Error(`HTTP ${res.status} for ${path}`);
+    checkAbort();
     await cache?.put(url, res.clone());
-    return { data: (await res.json()) as T, fromCache: false };
+    const data = (await res.json()) as T;
+    checkAbort();
+    return { data, fromCache: false };
   } catch (err) {
+    checkAbort();
     const hit = await cache?.match(url);
-    if (hit) return { data: (await hit.json()) as T, fromCache: true };
+    checkAbort();
+    if (hit) { const data = (await hit.json()) as T; checkAbort(); return { data, fromCache: true }; }
     throw err;
   }
 }

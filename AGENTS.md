@@ -36,3 +36,4 @@ use the editor.
 - Phase 3 pins use the 3D-only `filters.ts` adapter and pure `geo3d/pins.ts` rules; keep the 2D implementation untouched to preserve its behavior.
 - `Leonida3DPins` owns two depth-independent point batches; rebuild on zoom-step/data changes and project a spatial lookup only on taps, so gestures do not trigger selection or per-frame React updates.
 - Development-only `window.__pins3d.snapshot()` and `.measure()` expose live pin projections/counts and identical-camera baseline/overlay render statistics for verification; never use them as production state.
+- Pass the 3D route query AbortSignal through geometry loading, worker startup, fallback downloads and processed-cache writes; cancellation must release worker resources and never trigger fallback or publish cancelled geometry.
