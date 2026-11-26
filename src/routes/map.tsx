@@ -53,7 +53,7 @@ function MapPage() {
   const results = useMemo(() => {
     const t = fold(q.trim());
     if (t.length < 2 || !data) return [];
-    return data.locations.filter((l) => fold([l.name, l.type, l.area, l.region, l.real_life, l.description, kindMap.get(l.kind)?.name].filter(Boolean).join(" ")).includes(t)).slice(0, 30);
+    return data.locations.filter((l) => fold([l.name, l.type, l.area, l.region, l.real_life, l.description, kindMap.get(l.kind)?.name, kindLabel(kindMap.get(l.kind))].filter(Boolean).join(" ")).includes(t)).slice(0, 30);
   }, [q, data, kindMap]);
 
   return (
