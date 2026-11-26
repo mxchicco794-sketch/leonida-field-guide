@@ -66,7 +66,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
+            Torna all’inizio
           </a>
         </div>
       </div>
@@ -86,7 +86,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "La guida fan a GTA 6: mappa interattiva di Leonida, elenco dei collezionabili e luoghi preferiti." },
       { name: "theme-color", content: "#141012" },
       { property: "og:title", content: "Leonida Companion" },
-      { property: "og:description", content: "A GTA 6 fan companion: interactive Leonida map, collectibles tracker and favorites." },
+      { property: "og:description", content: "La guida fan a GTA 6: mappa interattiva di Leonida, elenco dei collezionabili e luoghi preferiti." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
