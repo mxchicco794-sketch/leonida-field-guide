@@ -5,14 +5,15 @@ import { progressActions, useProgress } from "@/lib/leonida/progress";
 import { useDataset } from "@/lib/leonida/queries";
 import { groupProgress } from "@/lib/leonida/stats";
 import { cn } from "@/lib/utils";
+import { kindLabel } from "@/lib/leonida/italian";
 
 export const Route = createFileRoute("/collectibles")({
   head: () => ({
     meta: [
-      { title: "Collectibles Tracker — Leonida Companion" },
-      { name: "description", content: "Track every GTA 6 collectible in Leonida by category and mark what you've found." },
+      { title: "Elenco collezionabili — Leonida Companion" },
+      { name: "description", content: "Tieni traccia dei collezionabili di GTA 6 a Leonida per categoria e segna quelli che hai trovato." },
       { property: "og:title", content: "Collectibles Tracker — Leonida Companion" },
-      { property: "og:description", content: "Track every GTA 6 collectible in Leonida by category." },
+      { property: "og:description", content: "Tieni traccia dei collezionabili di GTA 6 a Leonida, suddivisi per categoria." },
     ],
   }),
   component: Collectibles,
@@ -26,8 +27,8 @@ function Collectibles() {
 
   return (
     <div>
-      <PageHeader eyebrow="Tracker" title="Collectibles" />
-      {isLoading && <StateMessage title="Syncing…" />}
+      <PageHeader eyebrow="Progressi" title="Collezionabili" />
+      {isLoading && <StateMessage title="Sincronizzazione…" />}
       <ul className="space-y-2 px-5">
         {rows.map((r) => {
           const items = open === r.kind.key ? data!.locations.filter((l) => l.kind === r.kind.key) : [];
@@ -36,7 +37,7 @@ function Collectibles() {
               <button onClick={() => setOpen(open === r.kind.key ? null : r.kind.key)} className="flex w-full items-center gap-3 p-4 text-left">
                 <span className="grid size-10 place-items-center rounded-xl bg-secondary text-lg">{r.kind.icon}</span>
                 <div className="flex-1">
-                  <p className="font-semibold">{r.kind.name}</p>
+                  <p className="font-semibold">{kindLabel(r.kind)}</p>
                   <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary"><div className="h-full bg-red" style={{ width: `${(r.found / r.total) * 100}%` }} /></div>
                 </div>
                 <span className="font-display text-sm text-muted-foreground">{r.found}/{r.total}</span>
@@ -47,7 +48,7 @@ function Collectibles() {
                     const isFound = found.includes(l.id);
                     return (
                       <li key={l.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
-                        <button aria-label="Toggle found" onClick={() => progressActions.toggleFound(l.id)} className={cn("size-5 shrink-0 rounded-md border-2", isFound ? "border-primary bg-red" : "border-muted-foreground")} />
+                        <button aria-label="Segna come trovato" onClick={() => progressActions.toggleFound(l.id)} className={cn("size-5 shrink-0 rounded-md border-2", isFound ? "border-primary bg-red" : "border-muted-foreground")} />
                         <Link to="/map" search={{ id: l.id }} className={cn("flex-1 truncate", isFound && "text-muted-foreground line-through")}>{l.name}</Link>
                         <span className="text-xs text-muted-foreground">{l.area}</span>
                       </li>
