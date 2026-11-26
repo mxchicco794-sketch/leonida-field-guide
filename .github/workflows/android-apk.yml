@@ -1,0 +1,69 @@
+name: Leonida Android debug APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, android-apk-checkpoint-26]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "native/**"
+      - "scripts/prepare-android-web.mjs"
+      - "vite.android.config.ts"
+      - "package.json"
+      - "bun.lock"
+      - ".github/workflows/android-apk.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-debug-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install web dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build standalone Android web app
+        run: |
+          bun run build:android
+          bun run prepare:android-web
+
+      - name: Install Capacitor dependencies
+        working-directory: native
+        run: npm install --no-audit --no-fund
+
+      - name: Generate and sync Android project
+        working-directory: native
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      - name: Build debug APK
+        working-directory: native/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: leonida-companion-debug-apk
+          path: native/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
