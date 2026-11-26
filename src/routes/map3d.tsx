@@ -13,6 +13,7 @@ import { loadProcessed, type Stage } from "@/lib/leonida/geo3d/load";
 import { loadRegional, type SelectedGeometry } from "@/lib/leonida/geo3d/regional-load";
 
 const Leonida3D = lazy(() => import("@/components/app/Leonida3D"));
+const Mobile3DDiagnostics = import.meta.env.DEV ? lazy(() => import("@/components/app/Mobile3DDiagnostics")) : null;
 
 export const Route = createFileRoute("/map3d")({
   ssr: false,
@@ -84,6 +85,7 @@ function Map3DPage() {
         Building heights are stylized estimates, not official GTA VI data. Drag to pan, pinch to zoom, two fingers to tilt. Data: <a className="underline" href={SOURCE_REPO} target="_blank" rel="noreferrer">Open GTA 6 Map</a> · CC BY 4.0
       </p>
       {selected && <LocationSheet loc={selected} kind={kindMap.get(selected.kind)} onClose={() => setSelected(null)} />}
+      {Mobile3DDiagnostics && <Suspense fallback={null}><Mobile3DDiagnostics mode={geo.data?.mode ?? null} {...(geo.isError ? { routeError: "Caricamento geometria fallito." } : {})} /></Suspense>}
     </div>
   );
 }

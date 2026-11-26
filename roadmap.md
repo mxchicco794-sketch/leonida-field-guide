@@ -14,3 +14,4 @@
 - [x] 3D Phase 4B: additive cache, cancellation and ownership gates
 - [x] 3D Phase 4B: opt-in residency, browser measurements and regression validation
 - [ ] 3D Phase 4B: OnePlus acceptance before default activation (requires device measurements)
+- [x] 3D Phase 4B.1: preview-only mobile diagnostics, 30-second comparison/export and automated/browser validation

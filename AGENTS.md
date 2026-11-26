@@ -40,3 +40,4 @@ use the editor.
 - Regional near detail is an opt-in lossless adapter after the unchanged v4 processor; keep its cache in a separate versioned database, publish only complete verified generations, and preserve the legacy slot for rollback.
 - Regional rendering owns only near building/road geometry, installs at most one region per frame, and never disposes shared materials; the manifest and global layers, not complete near arrays, belong in query data.
 - Development-only `window.__regions3d.snapshot()` and `window.__regionMetrics.report()/reset()/view(position,target)` measure residency, submitted GL buffer bytes and frame intervals at identical cameras; legacy remains default until real-device acceptance passes.
+- The preview-only mobile diagnostics panel consumes existing probes without changing scene ownership; its explicit recordings sample rAF intervals for at least 30 seconds and keep comparison results in sessionStorage, cancelling all panel work on close.
