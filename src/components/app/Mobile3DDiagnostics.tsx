@@ -10,7 +10,7 @@ export default function Mobile3DDiagnostics(props: Props) {
   const [open, setOpen] = useState(false);
   return <div className="pointer-events-none absolute inset-x-3 bottom-[122px] z-30">
     {open ? <DiagnosticPanel {...props} onClose={() => setOpen(false)} /> :
-      <Button variant="outline" size="sm" className="pointer-events-auto shadow" onClick={() => setOpen(true)} aria-label="Apri diagnostica 3D"><Activity /> Diagnostica</Button>}
+      <Button variant="outline" size="sm" className="pointer-events-auto shadow" onClick={() => setOpen(true)} aria-label="Apri il controllo tecnico 3D"><Activity /> Diagnostica</Button>}
   </div>;
 }
 
@@ -65,13 +65,13 @@ function DiagnosticPanel({ mode, routeError, onClose }: Props & { onClose: () =>
   const reset = () => { stop.current?.(); stop.current = null; setProgress(null); setRecordedFrames(null); setMessage(""); setCopyText(""); save([]); };
   const copy = async () => {
     const text = comparisonReport(results);
-    try { await navigator.clipboard.writeText(text); setMessage("Report copiato."); setCopyText(""); }
+    try { await navigator.clipboard.writeText(text); setMessage("Resoconto copiato."); setCopyText(""); }
     catch { setCopyText(text); setMessage("Appunti non disponibili: seleziona e copia il report qui sotto."); }
   };
   const row = (label: string, value: string) => <div className="flex justify-between gap-3"><dt className="text-muted-foreground">{label}</dt><dd className="text-right tabular-nums">{value}</dd></div>;
   const frames = recordedFrames && recordedFrames.samples > 0 ? recordedFrames : results.find((r) => r.mode === mode)?.frames ?? snapshot;
-  return <section aria-label="Diagnostica 3D" className="pointer-events-auto max-h-[48dvh] overflow-y-auto overscroll-contain rounded-lg border border-border bg-background p-3 text-xs text-foreground shadow-xl">
-    <div className="mb-2 flex items-center justify-between"><strong>Diagnostica · {modeLabel(mode)}</strong><Button variant="ghost" size="icon" onClick={onClose} aria-label="Chiudi diagnostica"><X /></Button></div>
+  return <section aria-label="Controllo tecnico 3D" className="pointer-events-auto max-h-[48dvh] overflow-y-auto overscroll-contain rounded-lg border border-border bg-background p-3 text-xs text-foreground shadow-xl">
+    <div className="mb-2 flex items-center justify-between"><strong>Controllo tecnico · {modeLabel(mode)}</strong><Button variant="ghost" size="icon" onClick={onClose} aria-label="Chiudi il controllo tecnico"><X /></Button></div>
     <dl className="space-y-1">
       {row("CPU scena", byteLabel(snapshot.cpu))}{row("CPU dettagli ravvicinati", byteLabel(snapshot.nearCpu))}{row("CPU regioni", byteLabel(snapshot.regionalCpu))}
       {row("GPU buffer GL", byteLabel(snapshot.gpu))}{row("GPU dettagli ravvicinati", byteLabel(snapshot.nearGpu))}
@@ -84,14 +84,14 @@ function DiagnosticPanel({ mode, routeError, onClose }: Props & { onClose: () =>
     <p className="mt-2 text-[10px] text-muted-foreground">CPU: geometria presente nella scena, non memoria heap totale. GPU: buffer GL, non VRAM totale. Fotogrammi: {frames === snapshot ? "sonda 3D in tempo reale; media non disponibile" : "intervalli di requestAnimationFrame registrati"}. Altre richieste/errori: N/D.</p>
     {snapshot.errors.map((error, i) => <p key={i} className="mt-1 break-words text-destructive">{error}</p>)}
     <div className="mt-3 grid grid-cols-2 gap-2">
-      <Button size="sm" variant="outline" disabled={mode !== "legacy" || progress !== null} onClick={() => record("legacy")}>REGISTRA MODALITÀ CLASSICA</Button>
-      <Button size="sm" variant="outline" disabled={mode !== "regional" || progress !== null} onClick={() => record("regional")}>REGISTRA MODALITÀ REGIONALE</Button>
-      <Button size="sm" variant="ghost" onClick={reset}><RotateCcw /> AZZERA CONFRONTO</Button>
-      <Button size="sm" variant="secondary" disabled={!results.length || progress !== null} onClick={() => void copy()}><Copy /> COPIA REPORT</Button>
+      <Button size="sm" variant="outline" disabled={mode !== "legacy" || progress !== null} onClick={() => record("legacy")}>REGISTRA MODALITÀ STANDARD</Button>
+      <Button size="sm" variant="outline" disabled={mode !== "regional" || progress !== null} onClick={() => record("regional")}>REGISTRA MODALITÀ PER REGIONI</Button>
+      <Button size="sm" variant="ghost" onClick={reset}><RotateCcw /> AZZERA IL CONFRONTO</Button>
+      <Button size="sm" variant="secondary" disabled={!results.length || progress !== null} onClick={() => void copy()}><Copy /> COPIA IL RESOCONTO</Button>
     </div>
     {progress && <p role="status" className="mt-2">{progress.phase === "stabilizing" ? "Attendo scena ferma e caricamenti completati…" : `Registrazione: ${Math.floor(progress.elapsed / 1000)} / 30 s`}</p>}
     <div className="mt-2 space-y-1">{results.map((r) => <p key={r.mode}>{modeLabel(r.mode)} · {(r.durationMs / 1000).toFixed(1)} s · p50 {valueLabel(r.frames.p50)} · p95 {valueLabel(r.frames.p95)} · p99 {valueLabel(r.frames.p99)} ms</p>)}</div>
     {message && <p role="status" className="mt-2 break-words">{message}</p>}
-    {copyText && <textarea aria-label="Report da copiare" readOnly value={copyText} onFocus={(e) => e.currentTarget.select()} className="mt-2 h-32 w-full rounded-md border border-input bg-background p-2 text-xs" />}
+    {copyText && <textarea aria-label="Resoconto da copiare" readOnly value={copyText} onFocus={(e) => e.currentTarget.select()} className="mt-2 h-32 w-full rounded-md border border-input bg-background p-2 text-xs" />}
   </section>;
 }
