@@ -11,7 +11,7 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: "Leonida Companion — guida di GTA 6" },
       { name: "description", content: "La tua guida a GTA 6: esplora la mappa di Leonida, tieni traccia dei collezionabili e salva i tuoi luoghi preferiti." },
-      { property: "og:title", content: "Leonida Companion — GTA 6 Fan Companion" },
+      { property: "og:title", content: "Leonida Companion — guida fan di GTA 6" },
       { property: "og:description", content: "Esplora la mappa di Leonida, segui i tuoi collezionabili e salva i luoghi preferiti." },
     ],
   }),
