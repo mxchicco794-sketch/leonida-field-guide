@@ -11,7 +11,11 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:android": "vite build --config vite.android.config.ts",
+    "prepare:android-web": "node scripts/prepare-android-web.mjs",
+    "bundle:android-web": "npm run build:android && npm run prepare:android-web",
+    "verify:android-pipeline": "node scripts/verify-android-pipeline.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1",
