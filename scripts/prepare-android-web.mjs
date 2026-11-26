@@ -30,8 +30,10 @@ export async function prepareAndroidWeb({
   if (/schermata locale di riserva|LEONIDA_WEB_URL/i.test(html)) {
     throw new Error("Refusing to package the native/www placeholder instead of the compiled application.");
   }
-  if (!/<div\b[^>]*id=["']root["']|<div\b[^>]*id=["']app["']/i.test(html)) {
-    throw new Error("Generated index.html does not contain a recognized application mount element.");
+  // TanStack Start hydrates the document shell directly; it does not require
+  // a React #root/#app div. Validate the HTML document and its hydration assets.
+  if (!/<html\b/i.test(html) || !/<body\b/i.test(html) || !/<script\b/i.test(html)) {
+    throw new Error("Generated index.html is missing the HTML document shell or hydration scripts.");
   }
   for (const asset of localAssetReferences(html)) {
     const assetPath = path.resolve(source, asset.replace(/^\//, ""));
