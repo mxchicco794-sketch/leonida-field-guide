@@ -3,13 +3,14 @@ import { Heart } from "lucide-react";
 import { Attribution, PageHeader, StateMessage } from "@/components/app/AppShell";
 import { progressActions, useProgress } from "@/lib/leonida/progress";
 import { useDataset } from "@/lib/leonida/queries";
+import { kindLabel } from "@/lib/leonida/italian";
 
 export const Route = createFileRoute("/favorites")({
   head: () => ({
     meta: [
       { title: "Preferiti — Leonida Companion" },
       { name: "description", content: "I luoghi di Leonida che hai salvato su questo dispositivo." },
-      { property: "og:title", content: "Favorites — Leonida Companion" },
+      { property: "og:title", content: "Preferiti — Leonida Companion" },
       { property: "og:description", content: "I tuoi luoghi salvati a Leonida." },
     ],
   }),
@@ -34,7 +35,7 @@ function Favorites() {
                 <span className="text-xl">{k?.icon}</span>
                 <Link to="/map" search={{ id: l.id }} className="flex-1 min-w-0">
                   <p className="truncate font-semibold">{l.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">{[k?.name, l.area].filter(Boolean).join(" · ")}</p>
+                  <p className="truncate text-xs text-muted-foreground">{[kindLabel(k), l.area].filter(Boolean).join(" · ")}</p>
                 </Link>
                 <button aria-label="Rimuovi dai preferiti" onClick={() => progressActions.toggleFavorite(l.id)} className="text-primary"><Heart className="size-5 fill-current" /></button>
               </li>
