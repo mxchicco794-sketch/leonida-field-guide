@@ -34,7 +34,7 @@ function Discover() {
         <h1 className="mt-2 font-display text-4xl font-bold uppercase leading-none tracking-wide animate-rise">Leonida<br />Companion</h1>
         <div className="mt-6 flex items-center gap-2 text-xs text-muted-foreground">
           {data?.source === "cache" ? <CloudOff className="size-3.5" /> : <RefreshCw className={isFetching ? "size-3.5 animate-spin" : "size-3.5"} />}
-          {data ? `${data.source === "cache" ? "Copia offline" : "Sincronizzato"} · ${new Date(data.syncedAt).toLocaleString()}` : isLoading ? "Sincronizzazione dei dati…" : "Non sincronizzato"}
+          {data ? `${data.source === "cache" ? "Copia offline" : "Sincronizzato"} · ${new Date(data.syncedAt).toLocaleString("it-IT")}` : isLoading ? "Sincronizzazione dei dati…" : "Non sincronizzato"}
           <button onClick={() => refetch()} className="ml-auto rounded-full border border-border px-3 py-1 font-semibold text-foreground">Sincronizza</button>
         </div>
       </section>
