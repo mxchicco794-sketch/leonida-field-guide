@@ -136,7 +136,7 @@ export default function Leonida3D({ data, districts, pins, regional }: { data: P
         {pins && <Leonida3DPins {...pins} />}
         {import.meta.env.DEV && <SceneMetrics probe={probe} />}
       </Canvas>
-      {regionalError && <div role="alert" className="glass absolute inset-x-3 bottom-40 z-20 border border-border p-3 text-sm text-foreground">Regional loading stopped: {regionalError}. Use the loading switch to return to legacy.</div>}
+      {regionalError && <div role="alert" className="glass absolute inset-x-3 bottom-40 z-20 border border-border p-3 text-sm text-foreground">Caricamento regionale interrotto: {regionalError}. Usa il selettore di caricamento per tornare alla modalità classica.</div>}
     </div>
   );
 }
