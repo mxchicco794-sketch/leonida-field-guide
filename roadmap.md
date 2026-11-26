@@ -15,3 +15,4 @@
 - [x] 3D Phase 4B: opt-in residency, browser measurements and regression validation
 - [ ] 3D Phase 4B: OnePlus acceptance before default activation (requires device measurements)
 - [x] 3D Phase 4B.1: preview-only mobile diagnostics, 30-second comparison/export and automated/browser validation
+- [x] 3D Phase 4C: Regional draw-call audit; paired-cell candidate rejected for unchanged calls and higher memory, original renderer restored; Legacy stays default
