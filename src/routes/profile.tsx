@@ -6,10 +6,10 @@ import { useDataset } from "@/lib/leonida/queries";
 export const Route = createFileRoute("/profile")({
   head: () => ({
     meta: [
-      { title: "Profile — Leonida Companion" },
-      { name: "description", content: "Your local progress, data sync status and app information." },
+      { title: "Profilo — Leonida Companion" },
+      { name: "description", content: "I tuoi progressi sul dispositivo, lo stato della sincronizzazione e le informazioni sull'app." },
       { property: "og:title", content: "Profile — Leonida Companion" },
-      { property: "og:description", content: "Your local progress and data sync status." },
+      { property: "og:description", content: "I tuoi progressi e lo stato della sincronizzazione." },
     ],
   }),
   component: Profile,
@@ -20,18 +20,18 @@ function Profile() {
   const { data } = useDataset();
   return (
     <div>
-      <PageHeader eyebrow="Device" title="Profile" />
+      <PageHeader eyebrow="Dispositivo" title="Profilo" />
       <div className="space-y-3 px-5">
-        <Row label="Locations found" value={found.length} />
-        <Row label="Favorites" value={favorites.length} />
-        <Row label="Data source" value={data ? (data.source === "cache" ? "Offline copy" : "Live") : "—"} />
-        <Row label="Last sync" value={data ? new Date(data.syncedAt).toLocaleString() : "—"} />
+        <Row label="Luoghi trovati" value={found.length} />
+        <Row label="Preferiti" value={favorites.length} />
+        <Row label="Data source" value={data ? (data.source === "cache" ? "Copia offline" : "In diretta") : "—"} />
+        <Row label="Ultima sincronizzazione" value={data ? new Date(data.syncedAt).toLocaleString("it-IT") : "—"} />
         <div className="rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
-          <p className="font-semibold text-foreground">How your data is stored</p>
-          <p className="mt-1">Progress and favorites are saved only on this device — no account yet. Map data is cached after the first sync, so lists work offline; map images are not yet available offline.</p>
+          <p className="font-semibold text-foreground">Come vengono salvati i tuoi dati</p>
+          <p className="mt-1">I progressi e i preferiti vengono salvati solo su questo dispositivo: al momento non è previsto un account. Dopo la prima sincronizzazione, i dati della mappa vengono memorizzati nella cache, così gli elenchi restano disponibili offline; le immagini della mappa, invece, non sono ancora disponibili senza connessione.</p>
         </div>
-        <button onClick={() => { if (confirm("Reset all found and favorite markers on this device?")) progressActions.reset(); }}
-          className="w-full rounded-xl border border-primary/40 py-3 text-sm font-semibold text-primary">Reset progress</button>
+        <button onClick={() => { if (confirm("Vuoi azzerare tutti i luoghi trovati e i preferiti salvati su questo dispositivo?")) progressActions.reset(); }}
+          className="w-full rounded-xl border border-primary/40 py-3 text-sm font-semibold text-primary">Azzera i progressi</button>
       </div>
       <Attribution />
     </div>
