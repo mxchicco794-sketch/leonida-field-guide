@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, EyeOff } from "lucide-react";
+import { ArrowLeft, EyeOff, Layers } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LocationSheet } from "@/components/app/LocationSheet";
@@ -10,12 +10,13 @@ import type { Group, LeonidaLocation } from "@/lib/leonida/types";
 import { SOURCE_REPO } from "@/lib/leonida/api";
 import { useDataset } from "@/lib/leonida/queries";
 import { loadProcessed, type Stage } from "@/lib/leonida/geo3d/load";
+import { loadRegional, type SelectedGeometry } from "@/lib/leonida/geo3d/regional-load";
 
 const Leonida3D = lazy(() => import("@/components/app/Leonida3D"));
 
 export const Route = createFileRoute("/map3d")({
   ssr: false,
-  validateSearch: (s: Record<string, unknown>): { id?: string } => typeof s["id"] === "string" ? { id: s["id"] } : {},
+  validateSearch: (s: Record<string, unknown>): { id?: string; detail?: "regional" } => ({ ...(typeof s["id"] === "string" ? { id: s["id"] } : {}), ...(s["detail"] === "regional" ? { detail: "regional" as const } : {}) }),
   head: () => ({
     meta: [
       { title: "Stylized 3D Map — Leonida Companion" },
@@ -30,9 +31,10 @@ export const Route = createFileRoute("/map3d")({
 });
 
 function Map3DPage() {
-  const { id } = Route.useSearch();
+  const { id, detail } = Route.useSearch();
   const [stage, setStage] = useState<Stage>("checking-cache");
-  const geo = useQuery({ queryKey: ["leonida", "geo3d"], queryFn: ({ signal }) => loadProcessed({ onStage: setStage, signal }), staleTime: Infinity, gcTime: 60_000, retry: 1 });
+  // Zero inactive retention prevents an old full legacy dataset surviving a mode change.
+  const geo = useQuery({ queryKey: ["leonida", "geo3d", detail ?? "legacy"], queryFn: async ({ signal }): Promise<SelectedGeometry> => detail === "regional" ? loadRegional({ onStage: setStage, signal }) : { mode: "legacy", loaded: await loadProcessed({ onStage: setStage, signal }) }, networkMode: "always", staleTime: Infinity, gcTime: 0, retry: 1 });
   const { data, kindMap, isError } = useDataset();
   const { found } = useProgress();
   const [groups, setGroups] = useState<Group[]>(["Collectibles", "Activities"]);
@@ -56,6 +58,7 @@ function Map3DPage() {
         <div className="glass rounded-full border border-border px-3 py-2 text-xs">
           <span className="font-semibold text-primary">3D · Stylized</span> <span className="text-muted-foreground">— not the in-game map</span>
         </div>
+        <Button asChild variant="outline" size="icon" className="glass shrink-0 rounded-full"><Link to="/map3d" search={{ ...(id ? { id } : {}), ...(detail ? {} : { detail: "regional" }) }} aria-label={detail ? "Use legacy loading" : "Test regional loading"} title={detail ? "Use legacy loading" : "Test regional loading"}><Layers className="size-4" /></Link></Button>
       </div>
       <div className="absolute inset-x-0 top-16 z-10 px-3">
         <div className="flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none]" aria-label="3D category filters">
@@ -76,7 +79,7 @@ function Map3DPage() {
       </div>
       {geo.isError ? msg("Could not load the map geometry. Connect to the internet and try again.")
         : !geo.data ? <Loading stage={stage} />
-        : <Suspense fallback={msg("Preparing 3D view…")}><Leonida3D data={geo.data.data} districts={data?.districts ?? []} pins={{ locations: visible, kindMap, found, focusId: id, onSelect: select }} /></Suspense>}
+        : <Suspense fallback={msg("Preparing 3D view…")}><Leonida3D key={detail ?? "legacy"} data={geo.data.mode === "regional" ? geo.data.prepared.global : geo.data.loaded.data} {...(geo.data.mode === "regional" ? { regional: geo.data.prepared } : {})} districts={data?.districts ?? []} pins={{ locations: visible, kindMap, found, focusId: id, onSelect: select }} /></Suspense>}
       <p className="glass absolute bottom-[76px] left-3 right-3 rounded-xl border border-border px-3 py-1.5 text-[10px] text-muted-foreground">
         Building heights are stylized estimates, not official GTA VI data. Drag to pan, pinch to zoom, two fingers to tilt. Data: <a className="underline" href={SOURCE_REPO} target="_blank" rel="noreferrer">Open GTA 6 Map</a> · CC BY 4.0
       </p>

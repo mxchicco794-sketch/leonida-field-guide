@@ -25,13 +25,13 @@ function abortable<T>(work: Promise<T>, signal?: AbortSignal): Promise<T> {
 }
 
 /** One startup message; every terminal path releases listeners, timer and worker. */
-export function runWorker(signal?: AbortSignal): Promise<Processed> {
+export function runWorkerTask<T>(signal: AbortSignal | undefined, startup: unknown, decode: (value: unknown) => T): Promise<T> {
   return new Promise((resolve, reject) => {
     checkAbort(signal);
     if (typeof Worker === "undefined") { reject(new Error("Web Workers unavailable")); return; }
     const w = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
     let settled = false;
-    const finish = (result: { data: Processed } | { error: unknown }) => {
+    const finish = (result: { data: T } | { error: unknown }) => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
@@ -52,11 +52,12 @@ export function runWorker(signal?: AbortSignal): Promise<Processed> {
         if (typeof msg !== "object" || msg === null || !("ok" in msg)) throw new Error("Malformed Worker message");
         if (msg.ok === false) {
           if ("error" in msg && typeof msg.error !== "string") throw new Error("Malformed Worker error");
-          throw new Error("error" in msg ? String(msg.error) : "Worker failed");
+          const reported = new Error("error" in msg ? String(msg.error) : "Worker failed");
+          if ("name" in msg && typeof msg.name === "string") reported.name = msg.name;
+          throw reported;
         }
         if (msg.ok !== true || !("data" in msg)) throw new Error("Unexpected Worker message");
-        const data = msg.data as Processed;
-        assertProcessed(data);
+        const data = decode(msg.data);
         finish({ data });
       } catch (e) { finish({ error: e }); }
     };
@@ -66,8 +67,12 @@ export function runWorker(signal?: AbortSignal): Promise<Processed> {
     w.addEventListener("messageerror", messageerror);
     signal?.addEventListener("abort", abort, { once: true });
     if (signal?.aborted) { abort(); return; }
-    try { w.postMessage({}); } catch (e) { finish({ error: e }); }
+    try { w.postMessage(startup); } catch (e) { finish({ error: e }); }
   });
+}
+
+export function runWorker(signal?: AbortSignal): Promise<Processed> {
+  return runWorkerTask(signal, {}, (value) => { const data = value as Processed; assertProcessed(data); return data; });
 }
 
 /** Fallback: same pipeline on the main thread (only used if the worker fails). */

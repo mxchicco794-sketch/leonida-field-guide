@@ -10,3 +10,7 @@
 - [x] 3D Phase 2: stylized extruded buildings (chunked + far LOD), all surface layers
 - [x] 3D Phase 3 Option A: 3D-only filters, batched pins/clusters, gesture-safe tap lookup, selected-location return to 2D, tests and validation
 - [x] 3D Phase 4A only: worker startup, message/error hardening, route cancellation, regression tests and cold-load verification
+- [x] 3D Phase 4B: exact regional adapter and geometry equivalence gate
+- [x] 3D Phase 4B: additive cache, cancellation and ownership gates
+- [x] 3D Phase 4B: opt-in residency, browser measurements and regression validation
+- [ ] 3D Phase 4B: OnePlus acceptance before default activation (requires device measurements)
