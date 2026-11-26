@@ -18,7 +18,7 @@ export const Route = createFileRoute("/map")({
     meta: [
       { title: "Mappa di Leonida — Leonida Companion" },
       { name: "description", content: "Mappa interattiva di Leonida con collezionabili, attività e luoghi dal progetto Open GTA 6 Map." },
-      { property: "og:title", content: "Leonida Map — Leonida Companion" },
+      { property: "og:title", content: "Mappa di Leonida — Leonida Companion" },
       { property: "og:description", content: "Mappa interattiva di Leonida con collezionabili, attività e luoghi." },
     ],
   }),
