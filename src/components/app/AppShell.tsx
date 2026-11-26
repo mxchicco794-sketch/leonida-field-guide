@@ -51,7 +51,7 @@ export function Attribution() {
     <p className="px-5 py-6 text-center text-[11px] leading-relaxed text-muted-foreground">
       Dati e tessere della mappa:{" "}
       <a className="underline hover:text-foreground" href="https://github.com/fbritoferreira/gta6" target="_blank" rel="noreferrer">Open GTA 6 Map</a>{" "}
-      by fbritoferreira, con licenza{" "}
+      di fbritoferreira, con licenza{" "}
       <a className="underline hover:text-foreground" href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>.
       Progetto fan non ufficiale, non affiliato a Rockstar Games.
     </p>
