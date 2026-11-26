@@ -23,7 +23,7 @@ export default function Leonida3DRegions({ prepared, near, far, material, roads,
     install: (payload, meta) => {
       const geometry = makeGeometry(payload.mesh, meta.kind === "building");
       const shared = meta.kind === "building" ? material : roads[meta.roadKind ?? "street"];
-      if (!shared) { geometry.dispose(); throw new Error("Unsupported road material"); }
+      if (!shared) { geometry.dispose(); throw new Error("Materiale della strada non supportato"); }
       const mesh = new THREE.Mesh(geometry, shared); mesh.visible = false; mesh.userData["nearDetail"] = true;
       if (meta.kind === "road") mesh.renderOrder = 10 + ["street", "minor", "main", "highway"].indexOf(meta.roadKind ?? "street");
       group.add(mesh);
