@@ -84,8 +84,8 @@ function DiagnosticPanel({ mode, routeError, onClose }: Props & { onClose: () =>
     <p className="mt-2 text-[10px] text-muted-foreground">CPU: geometria in scena, non heap totale. GPU: buffer GL, non VRAM totale. Frame: {frames === snapshot ? "sonda 3D live; media N/D" : "intervalli rAF della registrazione"}. Altre richieste/errori: N/D.</p>
     {snapshot.errors.map((error, i) => <p key={i} className="mt-1 break-words text-destructive">{error}</p>)}
     <div className="mt-3 grid grid-cols-2 gap-2">
-      <Button size="sm" variant="outline" disabled={mode !== "legacy" || progress !== null} onClick={() => record("legacy")}>REGISTRA LEGACY</Button>
-      <Button size="sm" variant="outline" disabled={mode !== "regional" || progress !== null} onClick={() => record("regional")}>REGISTRA REGIONAL</Button>
+      <Button size="sm" variant="outline" disabled={mode !== "legacy" || progress !== null} onClick={() => record("legacy")}>REGISTRA MODALITÀ CLASSICA</Button>
+      <Button size="sm" variant="outline" disabled={mode !== "regional" || progress !== null} onClick={() => record("regional")}>REGISTRA MODALITÀ REGIONALE</Button>
       <Button size="sm" variant="ghost" onClick={reset}><RotateCcw /> RESET CONFRONTO</Button>
       <Button size="sm" variant="secondary" disabled={!results.length || progress !== null} onClick={() => void copy()}><Copy /> COPIA REPORT</Button>
     </div>
