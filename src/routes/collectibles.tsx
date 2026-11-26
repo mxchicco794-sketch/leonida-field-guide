@@ -12,7 +12,7 @@ export const Route = createFileRoute("/collectibles")({
     meta: [
       { title: "Elenco collezionabili — Leonida Companion" },
       { name: "description", content: "Tieni traccia dei collezionabili di GTA 6 a Leonida per categoria e segna quelli che hai trovato." },
-      { property: "og:title", content: "Collectibles Tracker — Leonida Companion" },
+      { property: "og:title", content: "Elenco collezionabili — Leonida Companion" },
       { property: "og:description", content: "Tieni traccia dei collezionabili di GTA 6 a Leonida, suddivisi per categoria." },
     ],
   }),
